@@ -172,6 +172,7 @@ async function loadData() {
     state.customers = data.customers || [];
     state.sales = data.sales || [];
     state.stockMovements = data.stockMovements || [];
+    state.customerPayments = data.customerPayments || [];
     if (data.settings) {
       state.settings = data.settings;
       if (data.settings.codePIN) {
@@ -694,7 +695,8 @@ async function confirmSale(doPrint = true) {
 
     clearCart();
     await loadData();
-    alert(`✅ Vente ${data.sale.ticketCode} enregistrée avec succès !`);
+    // Proposer immédiatement le partage WhatsApp / SMS
+    openShareSaleReceipt(data.sale);
   } catch (err) {
     console.error("Erreur vente:", err);
     alert("Erreur réseau lors de la validation");
@@ -1025,13 +1027,16 @@ function renderCustomersTable() {
         <td class="p-3 text-right font-black ${detteVal > 0 ? 'text-amber-700' : 'text-emerald-700'}">
           ${formatMoney(detteVal)}
         </td>
-        <td class="p-3 text-center">
+        <td class="p-3 text-center space-x-1 whitespace-nowrap">
+          <button onclick="openShareCustomerStatement(${c.id})" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded text-xs font-bold transition" title="Envoyer le relevé de compte par WhatsApp ou SMS">
+            📤 Situation
+          </button>
           ${detteVal > 0 ? `
-            <button onclick="openModalPayDebt(${c.id})" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-sm">
-              💵 Encaisser Règlement
+            <button onclick="openModalPayDebt(${c.id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-sm transition">
+              💵 Encaisser
             </button>
           ` : `
-            <span class="text-xs text-slate-400">À jour</span>
+            <span class="text-xs text-slate-400 font-medium px-1.5 py-0.5 bg-slate-100 rounded">À jour</span>
           `}
         </td>
       </tr>
@@ -1100,11 +1105,14 @@ function closeModalPayDebt() {
 }
 
 async function submitDebtPayment() {
-  const customerId = document.getElementById('pay-debt-cust-id').value;
+  const customerId = parseInt(document.getElementById('pay-debt-cust-id').value);
   const montant = parseFloat(document.getElementById('pay-debt-amount').value) || 0;
   const modePaiement = document.getElementById('pay-debt-mode').value;
 
   if (montant <= 0) return alert("Montant invalide");
+
+  const customerBefore = state.customers.find(c => c.id === customerId);
+  const ancienneDette = customerBefore ? (parseFloat(customerBefore.dette) || 0) : montant;
 
   try {
     const res = await fetch(`/api/customers/${customerId}/payment`, {
@@ -1115,9 +1123,18 @@ async function submitDebtPayment() {
     if (!res.ok) throw new Error("Erreur de paiement dette");
     closeModalPayDebt();
     await loadData();
-    alert("✅ Règlement encaissé et déduit avec succès !");
+    playBeep('success');
+
+    const customerAfter = state.customers.find(c => c.id === customerId) || {
+      id: customerId,
+      nom: customerBefore ? customerBefore.nom : 'Client',
+      telephone: customerBefore ? customerBefore.telephone : '',
+      dette: Math.max(0, ancienneDette - montant)
+    };
+
+    openSharePaymentReceipt(customerAfter, montant, modePaiement, ancienneDette, customerAfter.dette);
   } catch (err) {
-    alert("Erreur réseau");
+    alert("Erreur réseau : " + err.message);
   }
 }
 
@@ -1171,9 +1188,12 @@ function renderZReports() {
         <td class="p-2.5 text-slate-600">${itemsCount} Adaka</td>
         <td class="p-2.5 font-medium"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100">${s.modePaiement}</span></td>
         <td class="p-2.5 text-right font-black text-slate-800">${formatMoney(s.totalNet)}</td>
-        <td class="p-2.5 text-center">
-          <button onclick='printThermalReceipt(${JSON.stringify(s)})' class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold" title="Réimprimer">
-            🖨️ Ticket
+        <td class="p-2.5 text-center space-x-1 whitespace-nowrap">
+          <button onclick='printThermalReceipt(${JSON.stringify(s)})' class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold" title="Réimprimer Ticket de Caisse">
+            🖨️
+          </button>
+          <button onclick='openShareSaleReceipt("${s.ticketCode}")' class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-xs font-bold transition" title="Envoyer par WhatsApp ou SMS">
+            💬 Partager
           </button>
         </td>
       </tr>
@@ -1882,4 +1902,426 @@ async function rafraichirDonneesManuellement() {
     }, 600);
   }
 }
+
+// ==========================================
+// 10. MODULE PARTAGE WHATSAPP & SMS (SUPER PRO)
+// ==========================================
+
+let currentShareState = {
+  type: '',
+  recipientName: '',
+  phone: '',
+  messageText: '',
+  saleData: null
+};
+
+// Formateur de numéro de téléphone Togo (+228)
+function cleanTogoPhone(phone) {
+  if (!phone) return '';
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.startsWith('00228')) {
+    digits = digits.slice(2);
+  }
+  if (digits.startsWith('228') && digits.length >= 11) {
+    return digits;
+  }
+  // Si numéro togolais à 8 chiffres (ex: 90123456 ou 70123456)
+  if (digits.length === 8) {
+    return '228' + digits;
+  }
+  // Si déjà avec indicatif ou autre
+  if (digits.length > 8 && !digits.startsWith('228')) {
+    return digits;
+  }
+  return digits.length > 0 ? ('228' + digits) : '';
+}
+
+// Générateur universel des liens WhatsApp et SMS (compatible iOS, Android et Ordinateur)
+function buildShareUrls(rawPhone, text) {
+  const cleanPhone = cleanTogoPhone(rawPhone);
+  const encodedText = encodeURIComponent(text || '');
+
+  // Lien WhatsApp : si téléphone fourni, cible directe, sinon ouvre sélecteur de contact WhatsApp
+  const whatsappUrl = cleanPhone
+    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+    : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+  // Détection iOS pour le protocole SMS universel
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const sep = isIOS ? '&' : '?';
+  const phoneFormatted = cleanPhone ? (cleanPhone.startsWith('228') ? `+${cleanPhone}` : cleanPhone) : '';
+  const smsUrl = phoneFormatted
+    ? `sms:${phoneFormatted}${sep}body=${encodedText}`
+    : `sms:${sep}body=${encodedText}`;
+
+  return { whatsappUrl, smsUrl, cleanPhone };
+}
+
+// 1. TICKET DE VENTE / FACTURE DÉTAILLÉE D'ACHAT
+function genererMessageTicketVente(sale) {
+  const shopName = (state.settings && state.settings.shop_name) || "SACHET-POS";
+  const shopAddress = (state.settings && state.settings.shop_address) || "Marché Tsévié / Lomé";
+  const shopPhone = (state.settings && state.settings.shop_phone) || "+228 90 33 33 28";
+  const dt = new Date(sale.date || Date.now());
+  const dateStr = dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  let lignesArticles = (sale.items || []).map(it => {
+    const qte = parseFloat(it.quantite) || 0;
+    const px = parseFloat(it.prix) || 0;
+    const tot = qte * px;
+    return `▪️ ${qte} ${it.lot || 'Adaka'} x ${it.nom} (${formatMoney(px)}) = *${formatMoney(tot)}*`;
+  }).join('\n');
+
+  let msg = `🛍️ *${shopName.toUpperCase()} - FACTURE & REÇU D'ACHAT*
+📍 ${shopAddress}
+📞 Service client : ${shopPhone}
+───────────────────────
+🧾 *N° Ticket :* ${sale.ticketCode || 'TICK'}
+📅 *Date :* ${dateStr}
+👤 *Client :* ${sale.clientNom || 'Client Comptoir'}
+───────────────────────
+*ARTICLES ACHETÉS :*
+${lignesArticles}
+───────────────────────
+💰 *TOTAL NET : ${formatMoney(sale.totalNet)}*
+💳 *Mode de règlement :* ${sale.modePaiement || 'ESPECES'}`;
+
+  if (sale.remise && sale.remise > 0) {
+    msg += `\n🏷️ *Remise accordée :* -${formatMoney(sale.remise)}`;
+  }
+  if (sale.modePaiement === 'ESPECES') {
+    msg += `\n💵 *Montant versé :* ${formatMoney(sale.montantRecu || sale.totalNet)}`;
+    if (sale.monnaieRendue && sale.monnaieRendue > 0) {
+      msg += `\n🪙 *Monnaie rendue :* ${formatMoney(sale.monnaieRendue)}`;
+    }
+  }
+  if (sale.montantRestant && sale.montantRestant > 0) {
+    msg += `\n⚠️ *RESTE À PAYER (CRÉDIT) : ${formatMoney(sale.montantRestant)}*`;
+  }
+
+  const footer = (state.settings && state.settings.receipt_footer) || "Merci pour votre fidélité et à très bientôt chez SachetPOS !";
+  msg += `\n───────────────────────\n🙏 _${footer}_`;
+  return msg;
+}
+
+// 2. SITUATION DE CRÉDIT & RELEVÉ DE COMPTE CLIENT
+function genererMessageSituationClient(customer) {
+  const shopName = (state.settings && state.settings.shop_name) || "SACHET-POS";
+  const shopAddress = (state.settings && state.settings.shop_address) || "Marché Tsévié / Lomé";
+  const shopPhone = (state.settings && state.settings.shop_phone) || "+228 90 33 33 28";
+  const dateStr = new Date().toLocaleDateString('fr-FR');
+  const dette = parseFloat(customer.dette) || 0;
+
+  const salesClient = state.sales.filter(s => s.customerId === customer.id);
+  const totalAchats = salesClient.reduce((sum, s) => sum + (parseFloat(s.totalNet) || 0), 0);
+  const creditSales = salesClient.filter(s => (s.montantRestant && s.montantRestant > 0) || s.modePaiement === 'CREDIT');
+  const payments = (state.customerPayments || []).filter(p => p.customerId === customer.id);
+
+  let msg = `📑 *${shopName.toUpperCase()} - RELEVÉ DE COMPTE CLIENT*
+📍 ${shopAddress}
+📞 Contact Boutique : ${shopPhone}
+───────────────────────
+👤 *Client :* ${customer.nom}
+📱 *Téléphone :* ${customer.telephone || 'Non renseigné'}
+📅 *Date d'arrêté :* ${dateStr}
+───────────────────────\n`;
+
+  if (dette > 0) {
+    msg += `🔴 *SOLDE RESTANT DÛ : ${formatMoney(dette)}*\n`;
+  } else {
+    msg += `🟢 *SOLDE ACTUEL : 0 FCFA (Compte entièrement à jour)*\n`;
+  }
+
+  msg += `📊 *Cumul des achats :* ${formatMoney(totalAchats)} (${salesClient.length} commandes)\n`;
+  msg += `───────────────────────\n`;
+
+  if (creditSales.length > 0) {
+    msg += `*DÉTAILS DES ACHATS À CRÉDIT :*\n`;
+    creditSales.slice(0, 5).forEach(s => {
+      const d = new Date(s.date).toLocaleDateString('fr-FR');
+      msg += `• ${d} | Ticket ${s.ticketCode} : *${formatMoney(s.montantRestant || s.totalNet)}*\n`;
+    });
+    if (creditSales.length > 5) {
+      msg += `_... et ${creditSales.length - 5} autres tickets précédents_\n`;
+    }
+    msg += `───────────────────────\n`;
+  }
+
+  if (payments.length > 0) {
+    msg += `*DERNIERS RÈGLEMENTS ENCAISSÉS :*\n`;
+    payments.slice(0, 4).forEach(p => {
+      const d = new Date(p.date).toLocaleDateString('fr-FR');
+      msg += `• ${d} : -${formatMoney(p.montant)} (${p.modePaiement || 'Espèces'})\n`;
+    });
+    msg += `───────────────────────\n`;
+  }
+
+  if (dette > 0) {
+    msg += `💬 _Rappel courtois : Nous vous prions de bien vouloir régulariser ce montant dès que possible._\n`;
+  }
+  msg += `🙏 _Merci pour votre partenariat et votre fidélité !_`;
+  return msg;
+}
+
+// 3. REÇU DE RÈGLEMENT DE DETTE
+function genererMessageRecuReglement(customer, montant, modePaiement, ancienneDette, nouvelleDette) {
+  const shopName = (state.settings && state.settings.shop_name) || "SACHET-POS";
+  const shopAddress = (state.settings && state.settings.shop_address) || "Marché Tsévié / Lomé";
+  const shopPhone = (state.settings && state.settings.shop_phone) || "+228 90 33 33 28";
+  const dt = new Date();
+  const dateStr = dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  let msg = `✅ *${shopName.toUpperCase()} - REÇU DE RÈGLEMENT*
+📍 ${shopAddress}
+📞 Contact : ${shopPhone}
+───────────────────────
+👤 *Client :* ${customer.nom}
+📅 *Date :* ${dateStr}
+───────────────────────
+💵 *MONTANT ENCAISSÉ : ${formatMoney(montant)}*
+💳 *Mode de paiement :* ${modePaiement || 'ESPECES'}
+───────────────────────
+📊 *SITUATION ACTUALISÉE DU COMPTE :*
+• Dette antérieure : ${formatMoney(ancienneDette)}
+• Règlement déduit : -${formatMoney(montant)}\n`;
+
+  if (nouvelleDette > 0) {
+    msg += `👉 *NOUVEAU SOLDE DÛ : ${formatMoney(nouvelleDette)}*\n`;
+  } else {
+    msg += `🎉 *FÉLICITATIONS : VOTRE COMPTE EST TOTALEMENT SOLDÉ (0 FCFA) !*\n`;
+  }
+
+  msg += `───────────────────────\n🙏 _Paiement bien validé avec nos remerciements sincères !_`;
+  return msg;
+}
+
+// 4. BILAN JOURNALIER / RAPPORT Z POUR LE PROPRIÉTAIRE
+function genererMessageBilanZ() {
+  const shopName = (state.settings && state.settings.shop_name) || "SACHET-POS";
+  const shopAddress = (state.settings && state.settings.shop_address) || "Marché Tsévié / Lomé";
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const totalCA = state.sales.reduce((sum, s) => sum + (parseFloat(s.totalNet) || 0), 0);
+  const totalEspeces = state.sales
+    .filter(s => s.modePaiement === 'ESPECES')
+    .reduce((sum, s) => sum + (parseFloat(s.totalNet) || 0), 0);
+  const totalMomo = state.sales
+    .filter(s => s.modePaiement === 'MOBILE_MONEY')
+    .reduce((sum, s) => sum + (parseFloat(s.totalNet) || 0), 0);
+  const totalCredit = state.sales
+    .filter(s => s.modePaiement === 'CREDIT' || (s.montantRestant && s.montantRestant > 0))
+    .reduce((sum, s) => sum + (parseFloat(s.montantRestant || s.totalNet) || 0), 0);
+
+  const volumeVendu = state.sales.reduce((sum, s) => {
+    return sum + (s.items || []).reduce((sub, it) => sub + (parseFloat(it.quantite) || 0), 0);
+  }, 0);
+
+  let totalCoutAchat = 0;
+  state.sales.forEach(s => {
+    (s.items || []).forEach(it => {
+      const prod = state.products.find(p => p.id === it.productId);
+      const coutUnitaire = prod && prod.prix_achat ? parseFloat(prod.prix_achat) : (parseFloat(it.prix) * 0.85);
+      totalCoutAchat += (coutUnitaire * (parseFloat(it.quantite) || 0));
+    });
+  });
+  const margeEstimee = Math.max(0, totalCA - totalCoutAchat);
+
+  let msg = `📊 *${shopName.toUpperCase()} - POINT DE CAISSE (BILAN Z)*
+📍 ${shopAddress}
+📅 *Arrêté au :* ${dateStr}
+───────────────────────
+💰 *CHIFFRE D'AFFAIRES GLOBAL : ${formatMoney(totalCA)}*
+📈 *Marge Brute estimée : ${formatMoney(margeEstimee)}*
+🧾 *Nombre de tickets :* ${state.sales.length} ventes
+📦 *Volume total vendu :* ${volumeVendu} Adaka
+───────────────────────
+*VENTILATION PAR MODE DE PAIEMENT :*
+💵 Espèces en caisse : *${formatMoney(totalEspeces)}*
+📱 Mobile Money (Flooz/T-Money) : *${formatMoney(totalMomo)}*
+⚠️ Ventes à crédit (Dettes créées) : *${formatMoney(totalCredit)}*
+───────────────────────
+💼 _Rapport officiel de caisse généré via SachetPOS._`;
+  return msg;
+}
+
+// OUVERTURE DU MODAL DE PARTAGE GÉNÉRIQUE
+function openShareModal({ type, icon, title, subtitle, recipientLabel, recipientName, phone, messageText, saleData }) {
+  currentShareState = {
+    type: type || 'ticket',
+    recipientName: recipientName || '',
+    phone: phone || '',
+    messageText: messageText || '',
+    saleData: saleData || null
+  };
+
+  const elemIcon = document.getElementById('share-modal-icon');
+  if (elemIcon) elemIcon.textContent = icon || '📤';
+
+  const elemTitle = document.getElementById('share-modal-title');
+  if (elemTitle) elemTitle.textContent = title || 'Partager la Situation';
+
+  const elemSub = document.getElementById('share-modal-subtitle');
+  if (elemSub) elemSub.textContent = subtitle || 'WhatsApp & SMS';
+
+  const elemRecLabel = document.getElementById('share-recipient-label');
+  if (elemRecLabel) elemRecLabel.textContent = recipientLabel || 'Destinataire :';
+
+  const elemRecName = document.getElementById('share-recipient-name');
+  if (elemRecName) elemRecName.textContent = recipientName || 'Client';
+
+  const phoneInput = document.getElementById('share-recipient-phone');
+  if (phoneInput) {
+    phoneInput.value = phone || '';
+  }
+
+  const previewElem = document.getElementById('share-message-preview');
+  if (previewElem) {
+    previewElem.textContent = messageText;
+  }
+
+  const printBtn = document.getElementById('btn-share-print');
+  if (printBtn) {
+    if (saleData) {
+      printBtn.classList.remove('hidden');
+    } else {
+      printBtn.classList.add('hidden');
+    }
+  }
+
+  updateShareLinks();
+
+  const modal = document.getElementById('modal-share-situation');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closeModalShareSituation() {
+  const modal = document.getElementById('modal-share-situation');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function updateShareLinks() {
+  const phoneInput = document.getElementById('share-recipient-phone');
+  const rawPhone = phoneInput ? phoneInput.value : (currentShareState.phone || '');
+  const msg = currentShareState.messageText || '';
+
+  const { whatsappUrl, smsUrl } = buildShareUrls(rawPhone, msg);
+
+  const btnWa = document.getElementById('btn-share-whatsapp');
+  if (btnWa) btnWa.href = whatsappUrl;
+
+  const btnSms = document.getElementById('btn-share-sms');
+  if (btnSms) btnSms.href = smsUrl;
+}
+
+function copierMessageShare() {
+  const text = currentShareState.messageText || '';
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("📋 Message copié dans le presse-papiers ! Vous pouvez le coller directement.");
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert("📋 Message copié !");
+  });
+}
+
+function imprimerTicketDepuisShare() {
+  if (currentShareState.saleData) {
+    printThermalReceipt(currentShareState.saleData);
+  } else {
+    alert("Aucun ticket physique associé à cette situation.");
+  }
+}
+
+// DECLENCHEURS SPÉCIFIQUES
+
+function openShareSaleReceipt(saleOrTicketCode) {
+  let sale = null;
+  if (typeof saleOrTicketCode === 'object' && saleOrTicketCode !== null) {
+    sale = saleOrTicketCode;
+  } else {
+    sale = state.sales.find(s => s.ticketCode === saleOrTicketCode || String(s.id) === String(saleOrTicketCode));
+  }
+  if (!sale) return alert("Vente introuvable");
+
+  let phone = '';
+  if (sale.customerId) {
+    const cust = state.customers.find(c => c.id === sale.customerId);
+    if (cust && cust.telephone) phone = cust.telephone;
+  }
+
+  const msg = genererMessageTicketVente(sale);
+  openShareModal({
+    type: 'sale',
+    icon: '🧾',
+    title: `Ticket ${sale.ticketCode}`,
+    subtitle: "Détails d'achat et facture électronique",
+    recipientLabel: 'Client :',
+    recipientName: sale.clientNom || 'Client Comptoir',
+    phone: phone,
+    messageText: msg,
+    saleData: sale
+  });
+}
+
+function openShareCustomerStatement(customerId) {
+  const customer = state.customers.find(c => c.id === customerId);
+  if (!customer) return alert("Client introuvable");
+
+  const msg = genererMessageSituationClient(customer);
+  openShareModal({
+    type: 'statement',
+    icon: '📑',
+    title: `Situation : ${customer.nom}`,
+    subtitle: 'Relevé de compte, achats & situation de crédit',
+    recipientLabel: 'Client :',
+    recipientName: customer.nom,
+    phone: customer.telephone || '',
+    messageText: msg,
+    saleData: null
+  });
+}
+
+function openSharePaymentReceipt(customer, montant, modePaiement, ancienneDette, nouvelleDette) {
+  const msg = genererMessageRecuReglement(customer, montant, modePaiement, ancienneDette, nouvelleDette);
+  openShareModal({
+    type: 'payment',
+    icon: '✅',
+    title: `Reçu de Règlement : ${formatMoney(montant)}`,
+    subtitle: 'Confirmation de versement et nouveau solde de dette',
+    recipientLabel: 'Client :',
+    recipientName: customer.nom,
+    phone: customer.telephone || '',
+    messageText: msg,
+    saleData: null
+  });
+}
+
+function openShareDailyZReport() {
+  const msg = genererMessageBilanZ();
+  const shopPhone = (state.settings && state.settings.shop_phone) || '';
+  openShareModal({
+    type: 'zreport',
+    icon: '📊',
+    title: 'Point de Caisse (Bilan Z)',
+    subtitle: 'Chiffre d\'affaires, encaissements et marge brute',
+    recipientLabel: 'Gérant / Propriétaire :',
+    recipientName: (state.settings && state.settings.shop_name) || 'Direction',
+    phone: shopPhone,
+    messageText: msg,
+    saleData: null
+  });
+}
+
 

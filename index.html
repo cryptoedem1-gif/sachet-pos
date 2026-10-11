@@ -462,8 +462,11 @@
           <p class="text-xs text-slate-500">Suivi des encaissements et journal de caisse</p>
         </div>
         <div class="flex items-center gap-2">
+          <button onclick="openShareDailyZReport()" class="px-3.5 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <span>💬</span> Bilan WhatsApp
+          </button>
           <button onclick="printZReport()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
-            🖨️ Imprimer Rapport Z du Jour
+            🖨️ Imprimer Rapport Z
           </button>
         </div>
       </div>
@@ -1098,6 +1101,79 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : ENVOI SITUATION & FACTURE (WHATSAPP / SMS) -->
+  <!-- ========================================== -->
+  <div id="modal-share-situation" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <!-- En-tête modal -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl" id="share-modal-icon">📤</span>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm" id="share-modal-title">Partager la Situation (WhatsApp / SMS)</h3>
+            <p class="text-[11px] text-slate-500" id="share-modal-subtitle">Détails d'achat, facture ou relevé de compte</p>
+          </div>
+        </div>
+        <button onclick="closeModalShareSituation()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <!-- Destinataire et Téléphone -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-slate-700" id="share-recipient-label">Client :</span>
+          <span class="font-bold text-sky-800 text-sm" id="share-recipient-name">Client Comptoir</span>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Numéro de Téléphone :</label>
+          <div class="flex gap-2">
+            <span class="inline-flex items-center px-2.5 bg-slate-200 border border-slate-300 rounded-lg font-bold text-slate-700 text-xs">🇹🇬 +228</span>
+            <input type="tel" id="share-recipient-phone" placeholder="Ex: 90 33 33 28" oninput="updateShareLinks()" class="flex-1 p-2 border border-slate-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Prévisualisation du Message -->
+      <div class="space-y-1 text-xs">
+        <div class="flex justify-between items-center text-slate-600 font-semibold">
+          <span>Aperçu du message formaté :</span>
+          <button type="button" onclick="copierMessageShare()" class="text-sky-700 hover:text-sky-900 font-bold flex items-center gap-1 text-[11px]">
+            <span>📋</span> Copier le texte
+          </button>
+        </div>
+        <div class="bg-[#eef5f0] border border-emerald-200 p-3 rounded-xl max-h-48 overflow-y-auto font-sans text-xs text-slate-800 whitespace-pre-wrap select-all shadow-inner leading-relaxed" id="share-message-preview">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Boutons d'Action (WhatsApp, SMS, Impression) -->
+      <div class="space-y-2 pt-1">
+        <!-- Bouton WhatsApp -->
+        <a id="btn-share-whatsapp" href="#" target="_blank" class="w-full py-2.5 bg-[#25D366] hover:bg-[#128C7E] active:scale-95 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-2 transition">
+          <span class="text-base">💬</span>
+          <span>Envoyer directement sur WhatsApp</span>
+        </a>
+
+        <!-- Bouton SMS -->
+        <a id="btn-share-sms" href="#" class="w-full py-2 bg-sky-700 hover:bg-sky-800 active:scale-95 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-2 transition">
+          <span class="text-base">📱</span>
+          <span>Envoyer par SMS classique</span>
+        </a>
+
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="copierMessageShare()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center justify-center gap-1.5">
+            <span>📋</span> Copier
+          </button>
+          <button type="button" id="btn-share-print" onclick="imprimerTicketDepuisShare()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+            <span>🖨️</span> Ticket Caisse
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
