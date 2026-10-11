@@ -134,6 +134,8 @@ window.addEventListener('keydown', (e) => {
 
 // --- INITIALISATION ---
 document.addEventListener('DOMContentLoaded', async () => {
+  initSecurityPin();
+  initPullToRefresh();
   await loadData();
   switchTab('pos');
 });
@@ -148,7 +150,13 @@ async function loadData() {
     state.customers = data.customers || [];
     state.sales = data.sales || [];
     state.stockMovements = data.stockMovements || [];
-    if (data.settings) state.settings = data.settings;
+    if (data.settings) {
+      state.settings = data.settings;
+      if (data.settings.codePIN) {
+        const labelCode = document.getElementById('label-pin-code');
+        if (labelCode) labelCode.textContent = data.settings.codePIN;
+      }
+    }
 
     updateHeaderInfo();
     populateCustomerDropdown();
@@ -1263,6 +1271,9 @@ function loadSettingsForm() {
   document.getElementById('param-shop-phone').value = state.settings.shop_phone || '';
   document.getElementById('param-shop-address').value = state.settings.shop_address || '';
   document.getElementById('param-receipt-footer').value = state.settings.receipt_footer || '';
+
+  const badgePin = document.getElementById('badge-current-pin');
+  if (badgePin) badgePin.textContent = `Code Actuel : ${getCodePIN()}`;
 }
 
 async function saveShopSettings() {
@@ -1435,3 +1446,418 @@ function copyToClipboard(elementId) {
     prompt("Copiez ce lien :", text);
   });
 }
+
+// ==========================================
+// ==========================================
+// 7. MODULE DE SÉCURITÉ & MOT DE PASSE (PIN)
+// ==========================================
+let saisiePINActuelle = "";
+
+function getCodePIN() {
+  if (state.settings && state.settings.codePIN) {
+    return String(state.settings.codePIN);
+  }
+  return localStorage.getItem('sachet_pos_pin') || "1234";
+}
+
+function initSecurityPin() {
+  const isUnlocked = sessionStorage.getItem('sachet_pos_deverrouille');
+  const overlay = document.getElementById('ecran-verrouillage');
+  const currentPin = getCodePIN();
+
+  const labelCode = document.getElementById('label-pin-code');
+  if (labelCode) labelCode.textContent = currentPin;
+
+  const badgePin = document.getElementById('badge-current-pin');
+  if (badgePin) badgePin.textContent = `Code Actuel : ${currentPin}`;
+
+  if (isUnlocked === 'true') {
+    if (overlay) overlay.style.display = 'none';
+  } else {
+    if (overlay) {
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      effacerToutPIN();
+    }
+  }
+
+  // Écoute clavier physique
+  window.removeEventListener('keydown', gererClavierPhysiquePIN);
+  window.addEventListener('keydown', gererClavierPhysiquePIN);
+}
+
+function gererClavierPhysiquePIN(e) {
+  const overlay = document.getElementById('ecran-verrouillage');
+  if (!overlay || overlay.style.display === 'none') return;
+
+  // Si l'utilisateur tape dans l'input direct, le focus fait déjà le travail
+  if (document.activeElement && document.activeElement.id === 'input-pin-direct') {
+    if (e.key === 'Enter') {
+      validerSaisieDirectePIN();
+    }
+    return;
+  }
+
+  if (e.key >= '0' && e.key <= '9') {
+    taperChiffrePIN(e.key);
+  } else if (e.key === 'Backspace') {
+    supprimerDernierPIN();
+  } else if (e.key === 'Escape') {
+    effacerToutPIN();
+  } else if (e.key === 'Enter') {
+    validerSaisieDirectePIN();
+  }
+}
+
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function onInputPinDirect(e) {
+  saisiePINActuelle = e.target.value;
+  const msgEl = document.getElementById('pin-erreur-msg');
+  if (msgEl) msgEl.innerText = "";
+  
+  if (saisiePINActuelle === getCodePIN()) {
+    deverrouillerSucces();
+  }
+}
+
+function taperChiffrePIN(chiffre) {
+  saisiePINActuelle += chiffre;
+  const input = document.getElementById('input-pin-direct');
+  if (input) input.value = saisiePINActuelle;
+  playBeep('click');
+
+  const codeAttendu = getCodePIN();
+  if (saisiePINActuelle === codeAttendu) {
+    deverrouillerSucces();
+  } else if (saisiePINActuelle.length >= codeAttendu.length && /^\d+$/.test(codeAttendu)) {
+    indiquerErreurPIN();
+  }
+}
+
+function supprimerDernierPIN() {
+  if (saisiePINActuelle.length > 0) {
+    saisiePINActuelle = saisiePINActuelle.slice(0, -1);
+    const input = document.getElementById('input-pin-direct');
+    if (input) input.value = saisiePINActuelle;
+  }
+}
+
+function effacerToutPIN() {
+  saisiePINActuelle = "";
+  const input = document.getElementById('input-pin-direct');
+  if (input) input.value = "";
+  const msgEl = document.getElementById('pin-erreur-msg');
+  if (msgEl) msgEl.innerText = "";
+}
+
+function validerSaisieDirectePIN() {
+  const input = document.getElementById('input-pin-direct');
+  const codeTape = (input ? input.value : saisiePINActuelle).trim();
+  const codeAttendu = getCodePIN();
+
+  if (codeTape === codeAttendu) {
+    deverrouillerSucces();
+  } else {
+    indiquerErreurPIN();
+  }
+}
+
+function indiquerErreurPIN() {
+  const msgEl = document.getElementById('pin-erreur-msg');
+  if (msgEl) {
+    msgEl.className = 'text-xs text-red-400 font-bold min-h-[1.25rem] transition-all';
+    msgEl.innerText = "❌ Mot de passe incorrect, veuillez réessayer";
+  }
+  const input = document.getElementById('input-pin-direct');
+  if (input) {
+    input.classList.add('animate-shake');
+    setTimeout(() => input.classList.remove('animate-shake'), 450);
+  }
+  setTimeout(() => {
+    effacerToutPIN();
+  }, 600);
+}
+
+function deverrouillerSucces() {
+  sessionStorage.setItem('sachet_pos_deverrouille', 'true');
+  const overlay = document.getElementById('ecran-verrouillage');
+  const msgEl = document.getElementById('pin-erreur-msg');
+  if (msgEl) {
+    msgEl.className = 'text-xs text-emerald-400 font-bold min-h-[1.25rem] transition-all';
+    msgEl.innerText = "✅ Accès autorisé ! Bienvenue sur SachetPOS";
+  }
+  playBeep('success');
+  setTimeout(() => {
+    if (overlay) {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.25s ease-out';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.style.opacity = '1';
+      }, 250);
+    }
+  }, 350);
+}
+
+function verrouillerApplication() {
+  sessionStorage.removeItem('sachet_pos_deverrouille');
+  saisiePINActuelle = "";
+  const overlay = document.getElementById('ecran-verrouillage');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    effacerToutPIN();
+  }
+}
+
+function openModalChangerPIN() {
+  const modal = document.getElementById('modal-changer-pin');
+  if (modal) {
+    document.getElementById('pin-actuel').value = '';
+    document.getElementById('pin-nouveau').value = '';
+    document.getElementById('pin-confirmer').value = '';
+    document.getElementById('pin-change-error').textContent = '';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closeModalChangerPIN() {
+  const modal = document.getElementById('modal-changer-pin');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+async function validerChangementPIN(e) {
+  e.preventDefault();
+  const actuel = document.getElementById('pin-actuel').value.trim();
+  const nouveau = document.getElementById('pin-nouveau').value.trim();
+  const confirmer = document.getElementById('pin-confirmer').value.trim();
+  const errEl = document.getElementById('pin-change-error');
+
+  const codeAttendu = getCodePIN();
+  if (actuel !== codeAttendu) {
+    errEl.textContent = "❌ Le mot de passe actuel est incorrect.";
+    return;
+  }
+
+  if (nouveau.length < 3) {
+    errEl.textContent = "❌ Le nouveau mot de passe doit comporter au moins 3 caractères.";
+    return;
+  }
+
+  if (nouveau !== confirmer) {
+    errEl.textContent = "❌ La confirmation ne correspond pas au nouveau mot de passe.";
+    return;
+  }
+
+  // Enregistrer localement et sur le serveur
+  state.settings = state.settings || {};
+  state.settings.codePIN = nouveau;
+  localStorage.setItem('sachet_pos_pin', nouveau);
+
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codePIN: nouveau })
+    });
+  } catch (err) {
+    console.error("Erreur sync code PIN:", err);
+  }
+
+  const labelCode = document.getElementById('label-pin-code');
+  if (labelCode) labelCode.textContent = nouveau;
+  const badgePin = document.getElementById('badge-current-pin');
+  if (badgePin) badgePin.textContent = `Code Actuel : ${nouveau}`;
+
+  closeModalChangerPIN();
+  playBeep('success');
+  alert(`✅ Votre nouveau mot de passe (${nouveau}) a été enregistré avec succès !`);
+  effacerToutPIN();
+}
+
+async function savePinFromSettings() {
+  const nouveau = (document.getElementById('input-new-pin-settings').value || '').trim();
+  const confirmer = (document.getElementById('input-confirm-pin-settings').value || '').trim();
+  const statusMsg = document.getElementById('settings-pin-status-msg');
+
+  if (!nouveau) {
+    statusMsg.className = "text-xs font-bold text-red-500";
+    statusMsg.textContent = "❌ Veuillez saisir un mot de passe.";
+    return;
+  }
+  if (nouveau.length < 3) {
+    statusMsg.className = "text-xs font-bold text-red-500";
+    statusMsg.textContent = "❌ Le mot de passe doit comporter au moins 3 caractères.";
+    return;
+  }
+  if (nouveau !== confirmer) {
+    statusMsg.className = "text-xs font-bold text-red-500";
+    statusMsg.textContent = "❌ La confirmation ne correspond pas au nouveau mot de passe.";
+    return;
+  }
+
+  state.settings = state.settings || {};
+  state.settings.codePIN = nouveau;
+  localStorage.setItem('sachet_pos_pin', nouveau);
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codePIN: nouveau })
+    });
+    if (!res.ok) throw new Error("Erreur serveur");
+  } catch (err) {
+    console.error("Erreur sync code PIN:", err);
+  }
+
+  const badgePin = document.getElementById('badge-current-pin');
+  if (badgePin) badgePin.textContent = `Code Actuel : ${nouveau}`;
+  const labelCode = document.getElementById('label-pin-code');
+  if (labelCode) labelCode.textContent = nouveau;
+
+  document.getElementById('input-new-pin-settings').value = '';
+  document.getElementById('input-confirm-pin-settings').value = '';
+
+  statusMsg.className = "text-xs font-bold text-emerald-600";
+  statusMsg.textContent = `✅ Mot de passe enregistré avec succès !`;
+  playBeep('success');
+  alert(`✅ Votre mot de passe de connexion a été mis à jour avec succès : ${nouveau}`);
+}
+
+// ==========================================
+// 8. MODULE PULL-TO-REFRESH MOBILE (GLISSER VERS LE BAS)
+// ==========================================
+let ptrStartY = 0;
+let ptrCurrentY = 0;
+let isPtrActive = false;
+let isPtrRefreshing = false;
+
+function initPullToRefresh() {
+  const indicator = document.getElementById('pull-to-refresh-indicator');
+  const icon = document.getElementById('ptr-icon');
+  const text = document.getElementById('ptr-text');
+  if (!indicator) return;
+
+  function getScrollTop(target) {
+    let el = target;
+    while (el && el !== document.body && el !== document.documentElement) {
+      if (el.scrollTop > 0) return el.scrollTop;
+      el = el.parentElement;
+    }
+    return window.scrollY || document.documentElement.scrollTop || 0;
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (isPtrRefreshing) return;
+    const overlay = document.getElementById('ecran-verrouillage');
+    if (overlay && overlay.style.display !== 'none') return; // ne pas activer sur l'écran PIN
+
+    if (getScrollTop(e.target) <= 0) {
+      ptrStartY = e.touches[0].clientY;
+      isPtrActive = true;
+    } else {
+      isPtrActive = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isPtrActive || isPtrRefreshing) return;
+    ptrCurrentY = e.touches[0].clientY;
+    const diff = ptrCurrentY - ptrStartY;
+
+    if (diff > 0 && getScrollTop(e.target) <= 0) {
+      const pull = Math.min(diff * 0.45, 90);
+      indicator.style.transform = `translateY(${pull}px)`;
+
+      if (pull > 55) {
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        if (text) text.textContent = "Relâchez pour actualiser...";
+      } else {
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        if (text) text.textContent = "Glissez vers le bas pour actualiser...";
+      }
+    } else {
+      indicator.style.transform = 'translateY(-100%)';
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!isPtrActive || isPtrRefreshing) return;
+    isPtrActive = false;
+    const diff = ptrCurrentY - ptrStartY;
+
+    if (diff * 0.45 > 55) {
+      await declencherActualisationPTR();
+    } else {
+      indicator.style.transform = 'translateY(-100%)';
+    }
+    ptrStartY = 0;
+    ptrCurrentY = 0;
+  });
+}
+
+async function declencherActualisationPTR() {
+  const indicator = document.getElementById('pull-to-refresh-indicator');
+  const icon = document.getElementById('ptr-icon');
+  const text = document.getElementById('ptr-text');
+
+  isPtrRefreshing = true;
+  if (indicator) indicator.style.transform = 'translateY(65px)';
+  if (icon) {
+    icon.textContent = "🔄";
+    icon.className = "text-base animate-spin-refresh inline-block";
+  }
+  if (text) text.textContent = "Actualisation des données en cours...";
+
+  try {
+    await loadData();
+    playBeep('success');
+    if (text) text.textContent = "✅ Données à jour !";
+    if (icon) {
+      icon.className = "text-base inline-block";
+      icon.textContent = "✅";
+    }
+  } catch (err) {
+    if (text) text.textContent = "Erreur de connexion";
+  }
+
+  setTimeout(() => {
+    if (indicator) indicator.style.transform = 'translateY(-100%)';
+    setTimeout(() => {
+      if (icon) {
+        icon.textContent = "⬇️";
+        icon.className = "text-base transition-transform duration-200 inline-block";
+        icon.style.transform = 'rotate(0deg)';
+      }
+      if (text) text.textContent = "Glissez vers le bas pour actualiser...";
+      isPtrRefreshing = false;
+    }, 200);
+  }, 600);
+}
+
+async function rafraichirDonneesManuellement() {
+  const btn = document.getElementById('btn-refresh-header');
+  if (btn) btn.classList.add('animate-spin');
+
+  try {
+    await loadData();
+    playBeep('success');
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setTimeout(() => {
+      if (btn) btn.classList.remove('animate-spin');
+    }, 600);
+  }
+}
+
