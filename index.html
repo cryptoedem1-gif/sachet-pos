@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SachetPOS - Gestion Commerciale & Caisse Express</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#075985">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100 text-slate-800 flex flex-col h-screen overflow-hidden select-none">
+
+  <!-- TOP HEADER -->
+  <header class="bg-sky-800 text-white shadow-md flex-none z-20">
+    <div class="px-3 sm:px-4 py-2 flex items-center justify-between flex-wrap gap-2">
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-2.5">
+        <img src="logo.png" alt="SachetPOS Logo" class="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-xl bg-white p-0.5 shadow-md border border-sky-400">
+        <div>
+          <h1 class="text-base sm:text-lg font-black tracking-wide leading-tight flex items-center gap-1.5 sm:gap-2">
+            SACHET<span class="text-sky-300">POS</span>
+            <span class="text-[10px] sm:text-xs bg-sky-900 border border-sky-600 px-1.5 py-0.5 rounded-full font-medium text-sky-200">Gros & Détail</span>
+          </h1>
+          <p class="text-[11px] sm:text-xs text-sky-200" id="header-shop-name">Commerce de Sachets & Sacs Rayés</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (Horizontally scrollable on mobile) -->
+      <nav class="flex items-center space-x-1 overflow-x-auto no-scrollbar max-w-full order-3 sm:order-2 py-1">
+        <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 bg-white text-sky-900 shadow whitespace-nowrap">
+          <span>🛒</span> Caisse (POS)
+        </button>
+        <button onclick="switchTab('stock')" id="tab-btn-stock" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>📦</span> Stock & Articles
+        </button>
+        <button onclick="switchTab('clients')" id="tab-btn-clients" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>👥</span> Dettes & Clients
+        </button>
+        <button onclick="switchTab('rapports')" id="tab-btn-rapports" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>📊</span> Clôture & Ventes
+        </button>
+        <button onclick="switchTab('params')" id="tab-btn-params" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>⚙️</span> Paramètres
+        </button>
+      </nav>
+
+      <!-- Quick Actions (Mobile Access, Backup, Audio) -->
+      <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs order-2 sm:order-3">
+        <!-- Bouton Accès Téléphone Mondial -->
+        <button onclick="openModalMobileAccess()" class="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-lg shadow flex items-center gap-1 transition" title="Consulter sur votre smartphone partout dans le monde">
+          <span>📱</span> <span class="hidden sm:inline">Accès</span> Téléphone
+        </button>
+
+        <!-- Sauvegarde 1-Clic -->
+        <button onclick="downloadBackup()" class="px-2 sm:px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Sauvegarder immédiatement toutes les données (db.json)">
+          <span>💾</span> <span class="hidden md:inline">Sauvegarder</span>
+        </button>
+
+        <button onclick="triggerRestoreUpload()" class="px-2 py-1.5 bg-sky-700 hover:bg-sky-600 border border-sky-500 text-white rounded-lg font-semibold flex items-center gap-1 text-xs hidden sm:flex" title="Restaurer un fichier de sauvegarde">
+          <span>📂</span>
+        </button>
+        <input type="file" id="file-restore-input" accept=".json" onchange="uploadBackup(event)" class="hidden">
+
+        <!-- Audio Beep toggle -->
+        <button onclick="toggleAudio()" id="btn-audio-toggle" class="p-1.5 bg-sky-900 hover:bg-sky-700 rounded-lg border border-sky-700 text-sky-200" title="Activer / Désactiver le bip sonore de caisse">
+          🔔
+        </button>
+
+        <!-- Financial badges -->
+        <div class="bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
+          <div class="text-[10px] text-sky-300">Valeur Stock</div>
+          <div class="text-xs font-bold text-amber-300" id="header-stock-value">0 FCFA</div>
+        </div>
+        <div class="bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
+          <div class="text-[10px] text-sky-300">Ventes Jour</div>
+          <div class="text-xs font-bold text-emerald-300" id="header-today-sales">0 FCFA</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 overflow-hidden relative">
+
+    <!-- ========================================== -->
+    <!-- TAB 1 : CAISSE & POINT DE VENTE (POS)       -->
+    <!-- ========================================== -->
+    <div id="view-pos" class="tab-view flex flex-col lg:flex-row h-full">
+      
+      <!-- Mobile Sub-Navigation (Switch between Catalog & Cart on phones) -->
+      <div class="flex lg:hidden bg-slate-200 p-1 rounded-xl m-2 gap-1 text-xs font-bold flex-none shadow-inner">
+        <button type="button" onclick="setMobilePosTab('catalog')" id="mobile-pos-btn-catalog" class="flex-1 py-2 rounded-lg bg-white text-sky-900 shadow transition flex items-center justify-center gap-1.5">
+          <span>🛍️</span> Catalogue Sachets
+        </button>
+        <button type="button" onclick="setMobilePosTab('cart')" id="mobile-pos-btn-cart" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
+          <span>🛒</span> Mon Panier (<span id="mobile-cart-badge">0</span>)
+        </button>
+      </div>
+
+      <!-- Left: Products Catalog & Filters -->
+      <div id="pos-catalog-panel" class="w-full lg:w-8/12 flex flex-col h-full border-r border-slate-200 bg-slate-50 relative">
+        
+        <!-- Search and Quick Category Bar -->
+        <div class="p-3 bg-white border-b border-slate-200 space-y-2 flex-none">
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <input type="text" id="pos-search" oninput="renderPosCatalog()" placeholder="Rechercher : Glaçon, Viva, Kavi, 5Frs, Noir, Grand, 100kg..." class="w-full pl-9 pr-9 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+              <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+              <button onclick="clearSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            
+            <!-- Quick Color filter -->
+            <select id="pos-color-filter" onchange="renderPosCatalog()" class="border border-slate-300 rounded-lg text-sm px-3 py-2 bg-white text-slate-700 focus:ring-2 focus:ring-sky-500">
+              <option value="">Toutes les Couleurs</option>
+              <option value="transparent">Transparent</option>
+              <option value="noir">Noir</option>
+              <option value="bleu">Bleu</option>
+              <option value="tout couleur">Tout couleur</option>
+            </select>
+          </div>
+
+          <!-- Category Pills -->
+          <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-pills">
+            <button onclick="setCategoryFilter('ALL')" class="cat-pill active px-3 py-1.5 rounded-full font-medium bg-sky-700 text-white whitespace-nowrap">Tous (55)</button>
+            <button onclick="setCategoryFilter('Glaçon')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Glaçon</button>
+            <button onclick="setCategoryFilter('Jus')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Jus</button>
+            <button onclick="setCategoryFilter('Kavi (1/4)')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Kavi (1/4)</button>
+            <button onclick="setCategoryFilter('Demi (1/2)')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Demi (1/2)</button>
+            <button onclick="setCategoryFilter('Litre')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Litre</button>
+            <button onclick="setCategoryFilter('Foutoufoutou')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Foutou</button>
+            <button onclick="setCategoryFilter('Arachide')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Arachide</button>
+            <button onclick="setCategoryFilter('Yaourt')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Yaourt</button>
+            <button onclick="setCategoryFilter('Sachets Vente Détail')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sachets Détail (5F, 10F, 50F)</button>
+            <button onclick="setCategoryFilter('Sacs Rayés & Bafana')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sacs Rayés & Bafana</button>
+          </div>
+        </div>
+
+        <!-- Products Grid Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-3 pb-16 lg:pb-3">
+          <div id="pos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
+        <!-- Floating mobile cart button when in catalog view -->
+        <div id="mobile-floating-cart-bar" class="lg:hidden absolute bottom-3 left-3 right-3 z-30 hidden">
+          <button type="button" onclick="setMobilePosTab('cart')" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black shadow-2xl flex items-center justify-between border-2 border-white">
+            <span class="flex items-center gap-2">🛒 Voir le Panier (<span id="floating-cart-count">0</span>)</span>
+            <span id="floating-cart-total" class="bg-emerald-800 px-2.5 py-1 rounded-lg text-xs">0 FCFA</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Cart & Payment Checkout -->
+      <div id="pos-cart-panel" class="w-full lg:w-4/12 hidden lg:flex flex-col h-full bg-white shadow-xl">
+        <!-- Cart Header & Customer selection -->
+        <div class="p-3 border-b border-slate-200 bg-slate-50 flex-none space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
+              <span>🛒</span> Panier en cours (<span id="cart-item-count">0</span>)
+            </h2>
+            <button onclick="clearCart()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50">
+              Vider
+            </button>
+          </div>
+
+          <!-- Select Client -->
+          <div class="flex gap-1.5 items-center">
+            <select id="cart-customer-select" class="flex-1 text-xs border border-slate-300 rounded-md p-1.5 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-sky-500">
+              <!-- Populated dynamically -->
+            </select>
+            <button onclick="openModalAddCustomer()" class="p-1.5 bg-slate-200 hover:bg-slate-300 rounded text-xs font-bold text-slate-700" title="Nouveau Client">
+              ➕
+            </button>
+          </div>
+        </div>
+
+        <!-- Cart Items List (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="cart-items-container">
+          <!-- Dynamically populated -->
+          <div class="flex flex-col items-center justify-center h-48 text-slate-400 text-sm">
+            <span class="text-3xl mb-1">🛍️</span>
+            <span>Le panier est vide</span>
+            <span class="text-xs text-slate-400">Cliquez sur un sachet pour l'ajouter</span>
+          </div>
+        </div>
+
+        <!-- Cart Footer & Pay Button -->
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex-none space-y-2.5">
+          <!-- Financial details -->
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between text-slate-500">
+              <span>Sous-total :</span>
+              <span class="font-semibold text-slate-700" id="cart-subtotal">0 FCFA</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-500">
+              <span>Remise (FCFA) :</span>
+              <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartTotals()" class="w-20 text-right p-0.5 border border-slate-300 rounded text-xs">
+            </div>
+            <div class="flex justify-between text-base font-black text-slate-900 pt-1 border-t border-slate-200">
+              <span>NET À PAYER :</span>
+              <span class="text-sky-700" id="cart-total">0 FCFA</span>
+            </div>
+          </div>
+
+          <!-- Checkout Button -->
+          <button onclick="openCheckoutModal()" id="btn-checkout" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-base transition">
+            <span>💳</span> ENCAISSER LA COMMANDE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2 : GESTION DES STOCKS & ARTICLES       -->
+    <!-- ========================================== -->
+    <div id="view-stock" class="tab-view hidden h-full flex flex-col p-4 bg-slate-100 overflow-y-auto">
+      
+      <!-- Top Stock Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-500 font-medium">Total Références</div>
+            <div class="text-2xl font-black text-slate-800" id="stock-stat-total">55</div>
+          </div>
+          <div class="text-3xl p-2 bg-sky-50 rounded-lg">📦</div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-500 font-medium">Valeur Totale du Stock</div>
+            <div class="text-2xl font-black text-emerald-600" id="stock-stat-valeur">0 FCFA</div>
+          </div>
+          <div class="text-3xl p-2 bg-emerald-50 rounded-lg">💰</div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-500 font-medium">Stock Faible (< 1 Adaka)</div>
+            <div class="text-2xl font-black text-amber-500" id="stock-stat-faible">0</div>
+          </div>
+          <div class="text-3xl p-2 bg-amber-50 rounded-lg">⚠️</div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-500 font-medium">En Rupture de Stock (0)</div>
+            <div class="text-2xl font-black text-rose-500" id="stock-stat-rupture">0</div>
+          </div>
+          <div class="text-3xl p-2 bg-rose-50 rounded-lg">🛑</div>
+        </div>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-1 max-w-lg">
+          <input type="text" id="stock-table-search" oninput="renderStockTable()" placeholder="Filtrer un sachet, marque, taille..." class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-sky-500">
+          
+          <select id="stock-table-cat" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white">
+            <option value="">Toutes catégories</option>
+            <option value="Glaçon">Glaçon</option>
+            <option value="Jus">Jus</option>
+            <option value="Kavi (1/4)">Kavi (1/4)</option>
+            <option value="Demi (1/2)">Demi (1/2)</option>
+            <option value="Litre">Litre</option>
+            <option value="Foutoufoutou">Foutoufoutou</option>
+            <option value="Arachide">Arachide</option>
+            <option value="Yaourt">Yaourt</option>
+            <option value="Sachets Vente Détail">Sachets Détail</option>
+            <option value="Sacs Rayés & Bafana">Sacs Rayés</option>
+          </select>
+
+          <!-- Filtre Disponibilité -->
+          <select id="stock-table-status" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white">
+            <option value="">Tous les états</option>
+            <option value="EN_STOCK">🟢 En Stock</option>
+            <option value="FAIBLE">🟡 Faible (&lt;1)</option>
+            <option value="RUPTURE">🔴 Rupture (0)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="openModalAddProduct()" class="px-3 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+            ➕ Nouvel Article
+          </button>
+          <button onclick="openModalStockMovement()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+            📥 Réapprovisionner
+          </button>
+          <button onclick="openModalStockJournal()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow" title="Historique complet des entrées / sorties de stock">
+            📜 Journal Mouvements
+          </button>
+          <a href="/api/export-csv" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1">
+            📊 Excel (.csv)
+          </a>
+        </div>
+      </div>
+
+      <!-- Inventory Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col">
+        <div class="overflow-y-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 text-slate-600 font-bold uppercase">
+              <tr>
+                <th class="p-2.5">Code</th>
+                <th class="p-2.5">Désignation</th>
+                <th class="p-2.5">Taille</th>
+                <th class="p-2.5">Couleur</th>
+                <th class="p-2.5">Marque</th>
+                <th class="p-2.5">Conditionnement</th>
+                <th class="p-2.5 text-center">Stock</th>
+                <th class="p-2.5 text-right text-sky-800">Prix Unitaire (Marché) ✏️</th>
+                <th class="p-2.5 text-right">Valeur Stock</th>
+                <th class="p-2.5 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-body" class="divide-y divide-slate-100">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3 : CLIENTS & CARNET DE CRÉDIT         -->
+    <!-- ========================================== -->
+    <div id="view-clients" class="tab-view hidden h-full flex flex-col p-4 bg-slate-100 overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Gestion des Clients & Carnet de Dettes</h2>
+          <p class="text-xs text-slate-500">Suivi des encours de crédit et règlements d'acomptes</p>
+        </div>
+        <button onclick="openModalAddCustomer()" class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
+          ➕ Ajouter un Client
+        </button>
+      </div>
+
+      <!-- Debt summary banner -->
+      <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-amber-800 font-semibold uppercase tracking-wider">Total des Créances / Dettes Clients</div>
+          <div class="text-2xl font-black text-amber-700" id="total-dettes-clients">0 FCFA</div>
+        </div>
+        <div class="text-3xl text-amber-600">📑</div>
+      </div>
+
+      <!-- Customers list -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
+            <tr>
+              <th class="p-3">Nom du Client</th>
+              <th class="p-3">Téléphone</th>
+              <th class="p-3">Adresse / Emplacement</th>
+              <th class="p-3 text-right">Dette Actuelle</th>
+              <th class="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customers-table-body" class="divide-y divide-slate-100">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4 : CLÔTURE DE CAISSE & HISTORIQUE     -->
+    <!-- ========================================== -->
+    <div id="view-rapports" class="tab-view hidden h-full flex flex-col p-4 bg-slate-100 overflow-y-auto">
+      
+      <!-- Date Picker & Print Z Report -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Clôture de Caisse (Rapport Z) & Ventes</h2>
+          <p class="text-xs text-slate-500">Suivi des encaissements et journal de caisse</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printZReport()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
+            🖨️ Imprimer Rapport Z du Jour
+          </button>
+        </div>
+      </div>
+
+      <!-- Z-Report Financial Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500 font-medium">Chiffre d'Affaires</div>
+          <div class="text-2xl font-black text-sky-700" id="z-total-ca">0 FCFA</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500 font-medium">Total Espèces</div>
+          <div class="text-2xl font-black text-emerald-600" id="z-total-especes">0 FCFA</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500 font-medium">Total Mobile Money</div>
+          <div class="text-2xl font-black text-indigo-600" id="z-total-momo">0 FCFA</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500 font-medium">Total Crédits</div>
+          <div class="text-2xl font-black text-amber-600" id="z-total-credit">0 FCFA</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-sm">
+          <div class="text-xs text-emerald-800 font-bold">Marge / Bénéfice Estimé</div>
+          <div class="text-2xl font-black text-emerald-700" id="z-total-marge">0 FCFA</div>
+        </div>
+      </div>
+
+      <!-- Sales Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col">
+        <div class="p-3 border-b border-slate-200 font-bold text-sm text-slate-700 flex justify-between items-center">
+          <span>Historique des Tickets de Vente</span>
+          <span class="text-xs font-normal text-slate-500" id="sales-count-badge">0 tickets enregistrés</span>
+        </div>
+        <div class="overflow-y-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
+              <tr>
+                <th class="p-2.5">N° Ticket</th>
+                <th class="p-2.5">Date & Heure</th>
+                <th class="p-2.5">Client</th>
+                <th class="p-2.5">Articles</th>
+                <th class="p-2.5">Paiement</th>
+                <th class="p-2.5 text-right">Montant Net</th>
+                <th class="p-2.5 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sales-table-body" class="divide-y divide-slate-100">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5 : PARAMÈTRES & SAUVEGARDE             -->
+    <!-- ========================================== -->
+    <div id="view-params" class="tab-view hidden h-full p-6 bg-slate-100 overflow-y-auto">
+      <div class="max-w-3xl mx-auto space-y-6">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Paramètres de la Boutique</h2>
+          <p class="text-xs text-slate-500">Personnalisez vos informations d'en-tête et vos sauvegardes</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm border-b pb-2">Informations Générales</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1">Nom de l'établissement / Boutique</label>
+              <input type="text" id="param-shop-name" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1">Téléphone(s)</label>
+              <input type="text" id="param-shop-phone" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block font-semibold text-slate-600 mb-1">Adresse / Emplacement au Marché</label>
+              <input type="text" id="param-shop-address" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block font-semibold text-slate-600 mb-1">Message de bas de ticket</label>
+              <input type="text" id="param-receipt-footer" class="w-full p-2 border border-slate-300 rounded-lg">
+            </div>
+          </div>
+          <button onclick="saveShopSettings()" class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold shadow">
+            💾 Enregistrer les Modifications
+          </button>
+        </div>
+
+        <!-- Maintenance & Backup -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm border-b pb-2">Sauvegarde & Restauration</h3>
+          <p class="text-xs text-slate-500">Toutes vos données sont stockées localement dans votre fichier <code class="bg-slate-100 px-1 py-0.5 rounded text-sky-700">db.json</code>.</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="/api/export-csv" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow flex items-center gap-1.5">
+              📥 Télécharger l'inventaire Excel (.CSV)
+            </a>
+            <button onclick="resetToDemoExcel()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow flex items-center gap-1.5">
+              🔄 Réinitialiser aux 55 articles d'origine (Excel)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL : ENCAISSEMENT / PAIEMENT DE LA VENTE-->
+  <!-- ========================================== -->
+  <div id="modal-checkout" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <span>💳</span> Encaissement de la Commande
+        </h3>
+        <button onclick="closeModalCheckout()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+      </div>
+
+      <!-- Total banner -->
+      <div class="bg-sky-50 border border-sky-100 p-3 rounded-xl text-center">
+        <div class="text-xs text-sky-600 font-semibold uppercase">Total Net à Payer</div>
+        <div class="text-3xl font-black text-sky-900" id="modal-checkout-total">0 FCFA</div>
+      </div>
+
+      <!-- Payment Method Radios -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mode de Règlement :</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="setPaymentMode('ESPECES')" id="paymode-especes" class="paymode-btn py-2.5 px-3 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-bold flex flex-col items-center gap-1">
+            <span>💵</span> Espèces
+          </button>
+          <button type="button" onclick="setPaymentMode('MOBILE_MONEY')" id="paymode-momo" class="paymode-btn py-2.5 px-3 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold flex flex-col items-center gap-1">
+            <span>📱</span> Mobile Money
+          </button>
+          <button type="button" onclick="setPaymentMode('CREDIT')" id="paymode-credit" class="paymode-btn py-2.5 px-3 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold flex flex-col items-center gap-1">
+            <span>📝</span> Vente à Crédit
+          </button>
+        </div>
+      </div>
+
+      <!-- Cash Keypad & Calculator -->
+      <div id="cash-calculator-section" class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <label class="font-semibold text-slate-700">Montant Reçu (FCFA) :</label>
+          <div class="text-slate-500">Billets rapides :</div>
+        </div>
+        
+        <!-- Quick notes -->
+        <div class="grid grid-cols-4 gap-1 text-xs">
+          <button type="button" onclick="addReceivedAmount(1000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">1 000</button>
+          <button type="button" onclick="addReceivedAmount(2000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">2 000</button>
+          <button type="button" onclick="addReceivedAmount(5000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">5 000</button>
+          <button type="button" onclick="addReceivedAmount(10000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">10 000</button>
+          <button type="button" onclick="addReceivedAmount(15000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">15 000</button>
+          <button type="button" onclick="addReceivedAmount(20000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">20 000</button>
+          <button type="button" onclick="addReceivedAmount(25000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">25 000</button>
+          <button type="button" onclick="setExactAmount()" class="p-1.5 bg-sky-100 hover:bg-sky-200 rounded font-bold text-sky-800">Compte Exact</button>
+        </div>
+
+        <input type="number" id="input-montant-recu" oninput="calculateChange()" class="w-full text-xl font-bold p-2.5 border-2 border-slate-300 rounded-xl text-center focus:border-sky-500 focus:outline-none" placeholder="0">
+
+        <!-- Change to return -->
+        <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex justify-between items-center text-sm">
+          <span class="font-bold text-emerald-800">Monnaie à rendre :</span>
+          <span class="text-xl font-black text-emerald-700" id="display-monnaie">0 FCFA</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModalCheckout()" class="w-1/3 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-sm">
+          Annuler
+        </button>
+        <button type="button" onclick="confirmSale(true)" class="w-2/3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-sm shadow-lg flex items-center justify-center gap-2">
+          <span>✅</span> VALIDER & IMPRIMER TICKET
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : AJOUT / MODIFICATION PRODUIT       -->
+  <!-- ========================================== -->
+  <div id="modal-product" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-sm" id="modal-product-title">Ajouter un Sachet / Sac</h3>
+        <button onclick="closeModalProduct()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <form id="form-product" onsubmit="saveProduct(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="prod-id">
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nom / Type</label>
+            <input type="text" id="prod-nom" placeholder="Ex: Glaçon, Kavi, Sac rayé" required class="w-full p-2 border rounded">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Catégorie</label>
+            <select id="prod-categorie" class="w-full p-2 border rounded bg-white">
+              <option value="Glaçon">Glaçon</option>
+              <option value="Jus">Jus</option>
+              <option value="Kavi (1/4)">Kavi (1/4)</option>
+              <option value="Demi (1/2)">Demi (1/2)</option>
+              <option value="Litre">Litre</option>
+              <option value="Foutoufoutou">Foutoufoutou</option>
+              <option value="Arachide">Arachide</option>
+              <option value="Yaourt">Yaourt</option>
+              <option value="Sachets Vente Détail">Sachets Détail</option>
+              <option value="Sacs Rayés & Bafana">Sacs Rayés & Bafana</option>
+              <option value="Autres Sachets">Autres Sachets</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Taille</label>
+            <input type="text" id="prod-taille" placeholder="Grand, Petit, 1/4..." required class="w-full p-2 border rounded">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Couleur</label>
+            <input type="text" id="prod-couleur" placeholder="Transparent, Noir..." required class="w-full p-2 border rounded">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Marque</label>
+            <input type="text" id="prod-marque" placeholder="Viva, Diamant..." required class="w-full p-2 border rounded">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Conditionnement</label>
+            <input type="text" id="prod-lot" value="adaka" required class="w-full p-2 border rounded">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Stock Initial (Adaka)</label>
+            <input type="number" step="0.01" id="prod-stock" value="1" required class="w-full p-2 border rounded">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Prix Vente (FCFA)</label>
+            <input type="number" id="prod-prix" value="0" required class="w-full p-2 border rounded">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeModalProduct()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded font-semibold">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-sky-700 text-white rounded font-bold">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : REAPPROVISIONNEMENT RAPIDE         -->
+  <!-- ========================================== -->
+  <div id="modal-reappro" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-sm">Entrée de Stock (Adaka)</h3>
+        <button onclick="closeModalReappro()" class="text-slate-400 font-bold">✕</button>
+      </div>
+
+      <div class="text-xs space-y-2">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Choisir l'Article</label>
+          <select id="reappro-product-select" class="w-full p-2 border rounded bg-white font-medium">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Quantité ajoutée (en Adaka / Carton)</label>
+          <input type="number" step="0.25" id="reappro-quantite" value="1" class="w-full p-2 border rounded text-lg font-bold">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Motif / Commentaire</label>
+          <input type="text" id="reappro-motif" value="Achat Fournisseur / Réappro" class="w-full p-2 border rounded">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModalReappro()" class="px-3 py-1.5 bg-slate-200 rounded font-semibold text-xs">Annuler</button>
+        <button onclick="submitReappro()" class="px-3 py-1.5 bg-emerald-600 text-white rounded font-bold text-xs">Valider l'Entrée</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : AJOUT CLIENT                       -->
+  <!-- ========================================== -->
+  <div id="modal-customer" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-sm">Nouveau Client</h3>
+        <button onclick="closeModalCustomer()" class="text-slate-400 font-bold">✕</button>
+      </div>
+      <div class="text-xs space-y-2">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nom Complet</label>
+          <input type="text" id="cust-nom" placeholder="Ex: Maman Tina" class="w-full p-2 border rounded">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Téléphone</label>
+          <input type="text" id="cust-tel" placeholder="+228 / +225 ..." class="w-full p-2 border rounded">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Emplacement / Boutique</label>
+          <input type="text" id="cust-adresse" placeholder="Grand Marché..." class="w-full p-2 border rounded">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModalCustomer()" class="px-3 py-1.5 bg-slate-200 rounded text-xs font-semibold">Annuler</button>
+        <button onclick="saveCustomer()" class="px-3 py-1.5 bg-sky-700 text-white rounded text-xs font-bold">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : RÈGLEMENT DE DETTE CLIENT          -->
+  <!-- ========================================== -->
+  <div id="modal-pay-debt" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-sm">Règlement de Crédit</h3>
+        <button onclick="closeModalPayDebt()" class="text-slate-400 font-bold">✕</button>
+      </div>
+      <input type="hidden" id="pay-debt-cust-id">
+      <div class="text-xs space-y-2">
+        <div class="p-2 bg-amber-50 rounded border border-amber-200">
+          <div class="text-slate-600 font-semibold" id="pay-debt-cust-name">Client : -</div>
+          <div class="text-amber-800 font-bold" id="pay-debt-current">Dette due : 0 FCFA</div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Montant Versé (FCFA)</label>
+          <input type="number" id="pay-debt-amount" class="w-full p-2 border rounded text-lg font-bold text-center">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Mode de Paiement</label>
+          <select id="pay-debt-mode" class="w-full p-2 border rounded bg-white">
+            <option value="ESPECES">Espèces</option>
+            <option value="MOBILE_MONEY">Mobile Money</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModalPayDebt()" class="px-3 py-1.5 bg-slate-200 rounded text-xs font-semibold">Annuler</button>
+        <button onclick="submitDebtPayment()" class="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-bold">Encaisser Règlement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : JOURNAL DES MOUVEMENTS DE STOCK    -->
+  <!-- ========================================== -->
+  <div id="modal-stock-journal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl space-y-3 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b pb-2 flex-none">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+            <span>📜</span> Journal Historique des Mouvements de Stock
+          </h3>
+          <p class="text-[11px] text-slate-500">Traçabilité complète des réapprovisionnements, ventes et ajustements</p>
+        </div>
+        <button onclick="closeModalStockJournal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 text-slate-600 font-bold uppercase">
+            <tr>
+              <th class="p-2">Date & Heure</th>
+              <th class="p-2">Article</th>
+              <th class="p-2">Type</th>
+              <th class="p-2 text-center">Quantité</th>
+              <th class="p-2 text-center">Avant / Après</th>
+              <th class="p-2">Motif</th>
+            </tr>
+          </thead>
+          <tbody id="stock-journal-table-body" class="divide-y divide-slate-100">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t flex-none">
+        <button onclick="closeModalStockJournal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : ACCÈS SUR TÉLÉPHONE (PARTOUT AU MONDE) -->
+  <!-- ========================================== -->
+  <div id="modal-mobile-access" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2 flex-none">
+        <div>
+          <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+            <span>📱</span> Consulter SachetPOS sur votre Téléphone
+          </h3>
+          <p class="text-[11px] text-slate-500">Accédez à votre caisse et à vos stocks depuis n'importe où</p>
+        </div>
+        <button onclick="closeModalMobileAccess()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <!-- Onglets du modal mobile : 1. Wi-Fi Local | 2. Partout au Monde (Tunnel) | 3. Cloud Render (24h/24) -->
+      <div class="grid grid-cols-3 gap-1.5 text-xs font-bold bg-slate-100 p-1 rounded-xl">
+        <button type="button" onclick="setMobileAccessMode('wifi')" id="btn-mode-wifi" class="py-2 rounded-lg bg-white shadow text-sky-800 flex items-center justify-center gap-1 transition text-[11px]">
+          <span>📶</span> Boutique Wi-Fi
+        </button>
+        <button type="button" onclick="setMobileAccessMode('world')" id="btn-mode-world" class="py-2 rounded-lg text-slate-600 flex items-center justify-center gap-1 transition text-[11px]">
+          <span>🚀</span> Tunnel Express
+        </button>
+        <button type="button" onclick="setMobileAccessMode('render')" id="btn-mode-render" class="py-2 rounded-lg text-slate-600 flex items-center justify-center gap-1 transition text-[11px]">
+          <span>☁️</span> Cloud Render
+        </button>
+      </div>
+
+      <!-- SECTION 1: MÊME WI-FI -->
+      <div id="section-mobile-wifi" class="space-y-3">
+        <div class="bg-sky-50 border border-sky-200 p-3 rounded-xl text-xs space-y-2">
+          <p class="text-sky-900 font-semibold">
+            Si votre téléphone est connecté au <strong>même réseau Wi-Fi</strong> que cet ordinateur (Wi-Fi de la boutique ou partage de connexion) :
+          </p>
+          <div class="bg-white p-2.5 rounded-lg border border-sky-200 flex items-center justify-between">
+            <span class="font-mono font-bold text-sky-950 text-sm select-all" id="text-local-wifi-url">http://192.168.0.161:3000</span>
+            <button onclick="copyToClipboard('text-local-wifi-url')" class="px-2 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded font-bold text-[11px]">
+              Copier
+            </button>
+          </div>
+        </div>
+
+        <!-- QR Code Wi-Fi -->
+        <div class="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+          <div class="text-xs font-bold text-slate-700">Scannez ce QR Code avec l'appareil photo de votre téléphone :</div>
+          <div id="qr-container-wifi" class="p-2 bg-white rounded-lg border shadow-sm">
+            <img id="qr-image-wifi" src="" alt="QR Code Wi-Fi" class="w-40 h-40 object-contain">
+          </div>
+          <span class="text-[10px] text-slate-400">Le QR Code ouvre instantanément la caisse sur votre téléphone.</span>
+        </div>
+      </div>
+
+      <!-- SECTION 2: PARTOUT DANS LE MONDE (INTERNET / 4G) -->
+      <div id="section-mobile-world" class="space-y-3 hidden">
+        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs space-y-2">
+          <p class="text-emerald-900 font-semibold">
+            Pour consulter votre boutique à distance depuis chez vous, en voyage ou en 4G/5G partout dans le monde :
+          </p>
+          
+          <div id="tunnel-status-area" class="space-y-2">
+            <button type="button" onclick="startPublicTunnel()" id="btn-start-tunnel" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow flex items-center justify-center gap-2">
+              <span>🚀</span> Activer mon Lien Internet Mondial (1-Clic)
+            </button>
+          </div>
+
+          <div id="tunnel-result-area" class="hidden space-y-2.5">
+            <div class="bg-white p-2.5 rounded-lg border border-emerald-300 flex items-center justify-between">
+              <span class="font-mono font-bold text-emerald-900 text-xs select-all truncate mr-2" id="text-tunnel-url">-</span>
+              <button onclick="copyToClipboard('text-tunnel-url')" class="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded font-bold text-[11px] whitespace-nowrap">
+                Copier
+              </button>
+            </div>
+            
+            <div class="flex justify-center">
+              <a id="btn-whatsapp-share" href="#" target="_blank" class="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow">
+                <span>💬</span> Envoyer le lien sur mon WhatsApp
+              </a>
+            </div>
+
+            <!-- QR Code Internet -->
+            <div class="flex flex-col items-center justify-center p-2 bg-white rounded-lg border">
+              <img id="qr-image-tunnel" src="" alt="QR Code Internet" class="w-36 h-36 object-contain">
+              <span class="text-[10px] text-slate-400 mt-1">Scannez pour ouvrir de n'importe où dans le monde</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Astuce Tailscale -->
+        <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-[11px] text-slate-600 space-y-1">
+          <div class="font-bold text-slate-700 flex items-center gap-1">
+            <span>🛡️</span> Option Tailscale VPN détectée :
+          </div>
+          <p>Votre ordinateur a déjà Tailscale activé (<code class="bg-slate-200 px-1 py-0.5 rounded font-mono" id="text-tailscale-ip">100.121.57.24</code>). Si vous installez Tailscale sur votre téléphone, vous accédez à votre boutique en liaison directe chiffrée permanente.</p>
+        </div>
+      </div>
+
+      <!-- SECTION 3: CLOUD RENDER PERMANENT 24H/24 -->
+      <div id="section-mobile-render" class="space-y-3 hidden">
+        <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-xl text-xs space-y-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">☁️</span>
+            <div>
+              <div class="font-bold text-indigo-950 text-sm">Accès Cloud Permanent 24h/24 (Même PC Éteint)</div>
+              <div class="text-[11px] text-indigo-700">Votre logiciel hébergé sur Render, accessible depuis n'importe où sans laisser l'ordinateur allumé</div>
+            </div>
+          </div>
+
+          <div class="bg-white p-2.5 rounded-lg border border-indigo-200 flex items-center justify-between">
+            <span class="font-mono font-bold text-indigo-950 text-xs select-all truncate mr-2" id="text-render-url">https://sachet-pos.onrender.com</span>
+            <button onclick="copyToClipboard('text-render-url')" class="px-2 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded font-bold text-[11px] whitespace-nowrap">
+              Copier
+            </button>
+          </div>
+
+          <div class="flex justify-center">
+            <a id="btn-whatsapp-render" href="https://api.whatsapp.com/send?text=Lien%20SachetPOS%20Cloud%20:%20https://sachet-pos.onrender.com" target="_blank" class="px-3.5 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow">
+              <span>💬</span> Envoyer le lien Render sur WhatsApp
+            </a>
+          </div>
+
+          <!-- QR Code Cloud Render -->
+          <div class="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-indigo-100 shadow-sm space-y-1.5">
+            <div class="text-xs font-bold text-slate-700">Scannez pour ouvrir le Cloud Render :</div>
+            <img id="qr-image-render" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fsachet-pos.onrender.com" alt="QR Code Render" class="w-36 h-36 object-contain">
+            <span class="text-[10px] text-slate-400">Fonctionne 24h/24 et 7j/7 même quand votre boutique est fermée</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions Installation PWA sur smartphone -->
+      <div class="border-t pt-3 text-xs text-slate-600 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-2xl">
+        <div class="font-bold text-slate-800 mb-1 flex items-center gap-1">
+          <span>📲</span> Astuce : Installer l'icône sur l'écran d'accueil de votre téléphone
+        </div>
+        <ul class="text-[11px] space-y-1 text-slate-500 list-disc list-inside">
+          <li><strong>Sur Android (Google Chrome)</strong> : Cliquez sur les 3 points ⋮ en haut ➔ <em>"Ajouter à l'écran d'accueil"</em>.</li>
+          <li><strong>Sur iPhone (Safari)</strong> : Cliquez sur le bouton Partager ➔ <em>"Sur l'écran d'accueil"</em>.</li>
+          <li>L'icône <strong>SachetPOS</strong> s'installera sur votre téléphone comme une vraie application !</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ZONE D'IMPRESSION DU TICKET DE CAISSE (80mm) -->
+  <!-- ========================================== -->
+  <div id="receipt-print-area" class="hidden">
+    <!-- Populated dynamically right before window.print() -->
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

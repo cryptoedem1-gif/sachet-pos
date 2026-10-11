@@ -1,0 +1,21 @@
+{
+  "name": "SachetPOS - Gestion & Caisse",
+  "short_name": "SachetPOS",
+  "description": "Logiciel de caisse et stock de sachets plastiques et sacs rayés",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#075985",
+  "theme_color": "#075985",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
