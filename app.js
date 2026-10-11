@@ -133,18 +133,40 @@ window.addEventListener('keydown', (e) => {
 });
 
 // --- INITIALISATION ---
+let dernierSyncTimestamp = 0;
+
 document.addEventListener('DOMContentLoaded', async () => {
   initSecurityPin();
   initPullToRefresh();
   await loadData();
   switchTab('pos');
+  startAutoSync();
 });
+
+function startAutoSync() {
+  setInterval(async () => {
+    try {
+      const res = await fetch('/api/sync');
+      if (res.ok) {
+        const d = await res.json();
+        if (d.lastUpdated) {
+          if (dernierSyncTimestamp > 0 && d.lastUpdated > dernierSyncTimestamp) {
+            console.log("🔄 Synchronisation automatique PC <-> Mobile détectée !");
+            await loadData();
+          }
+          dernierSyncTimestamp = d.lastUpdated;
+        }
+      }
+    } catch(e) {}
+  }, 3500);
+}
 
 async function loadData() {
   try {
     const res = await fetch('/api/data');
     if (!res.ok) throw new Error("Erreur de récupération des données");
     const data = await res.json();
+    dernierSyncTimestamp = Date.now();
     
     state.products = data.products || [];
     state.customers = data.customers || [];

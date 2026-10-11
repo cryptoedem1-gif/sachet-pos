@@ -70,6 +70,9 @@ function parseBody(req) {
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
@@ -90,6 +93,17 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type'
     });
     return res.end();
+  }
+
+  // Route API : Synchronisation en direct (heartbeat mtime)
+  if (pathname === '/api/sync' && method === 'GET') {
+    let lastUpdated = 0;
+    try {
+      if (fs.existsSync(DB_FILE)) {
+        lastUpdated = fs.statSync(DB_FILE).mtimeMs;
+      }
+    } catch (e) {}
+    return sendJson(res, 200, { lastUpdated });
   }
 
   // --- API ROUTES ---
@@ -457,7 +471,12 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end("404 Fichier non trouvé");
       } else {
-        res.writeHead(200, { 'Content-Type': contentType });
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
         res.end(content);
       }
     });
