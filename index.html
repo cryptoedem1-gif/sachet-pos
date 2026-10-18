@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SachetPOS - Gestion Commerciale & Caisse Express</title>
+  <title>MIAKIARA - Gestion Commerciale & Caisse Express</title>
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="manifest" href="manifest.json">
@@ -13,9 +13,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css?v=2.2">
+  <link rel="stylesheet" href="style.css?v=3.1_20261017">
 </head>
-<body class="bg-slate-100 text-slate-800 flex flex-col h-screen overflow-hidden select-none">
+<body class="bg-slate-100 text-slate-800 flex flex-col min-h-screen select-none">
+
+  <!-- ==================== CONTENEUR DE NOTIFICATIONS TOAST ==================== -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[999999] space-y-2 pointer-events-none max-w-sm w-full"></div>
 
   <!-- ==================== ÉCRAN DE DÉVERROUILLAGE SÉCURISÉ (PIN LOCK) ==================== -->
   <div id="ecran-verrouillage" class="fixed inset-0 z-[99999] bg-slate-950 flex flex-col items-center justify-center p-4 select-none">
@@ -24,14 +27,14 @@
       <!-- Logo & Titre Entreprise -->
       <div class="flex flex-col items-center">
         <div class="relative mb-2">
-          <img src="logo.png" alt="Logo SachetPOS" class="w-16 h-16 rounded-2xl border-2 border-sky-400 bg-white p-1 shadow-2xl object-contain">
+          <img src="logo.png" alt="Logo MIAKIARA" class="w-16 h-16 rounded-2xl border-2 border-sky-400 bg-white p-1 shadow-2xl object-contain">
           <div class="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md font-bold">
             🔒
           </div>
         </div>
-        <h2 class="text-xl font-black text-white tracking-wide">SACHET<span class="text-sky-400">POS</span></h2>
-        <p class="text-xs text-sky-300 font-semibold mt-0.5">Commerce de Sachets & Sacs Rayés</p>
-        <p class="text-[11px] text-slate-400 mt-1">Accès sécurisé gérant</p>
+        <h2 class="text-xl font-black text-white tracking-wide">MIAKIARA<span class="text-sky-400">POS</span></h2>
+        <p class="text-xs text-sky-300 font-semibold mt-0.5">Commerce de Sachets Plastiques & Emballages Togo</p>
+        <p class="text-[11px] text-slate-400 mt-1">Accès sécurisé Caisse & Gestion</p>
       </div>
 
       <!-- Champ de saisie direct (chiffres et lettres) -->
@@ -92,13 +95,13 @@
     <div class="px-3 sm:px-4 py-2 flex items-center justify-between flex-wrap gap-2">
       <!-- Logo & Title -->
       <div class="flex items-center space-x-2.5">
-        <img src="logo.png" alt="SachetPOS Logo" class="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-xl bg-white p-0.5 shadow-md border border-sky-400">
+        <img src="logo.png" alt="MIAKIARA Logo" class="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-xl bg-white p-0.5 shadow-md border border-sky-400">
         <div>
           <h1 class="text-base sm:text-lg font-black tracking-wide leading-tight flex items-center gap-1.5 sm:gap-2">
-            SACHET<span class="text-sky-300">POS</span>
+            MIAKIARA<span class="text-sky-300">POS</span>
             <span class="text-[10px] sm:text-xs bg-sky-900 border border-sky-600 px-1.5 py-0.5 rounded-full font-medium text-sky-200">Gros & Détail</span>
           </h1>
-          <p class="text-[11px] sm:text-xs text-sky-200" id="header-shop-name">Commerce de Sachets & Sacs Rayés</p>
+          <p class="text-[11px] sm:text-xs text-sky-200" id="header-shop-name">Commerce de Sachets Plastiques & Emballages Togo</p>
         </div>
       </div>
 
@@ -107,22 +110,40 @@
         <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 bg-white text-sky-900 shadow whitespace-nowrap">
           <span>🛒</span> Caisse (POS)
         </button>
+        <button onclick="switchTab('appro')" id="tab-btn-appro" class="tab-btn masquer-mode-vendeur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>📥</span> Approvisionnements & Marges
+        </button>
         <button onclick="switchTab('stock')" id="tab-btn-stock" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
           <span>📦</span> Stock & Articles
         </button>
         <button onclick="switchTab('clients')" id="tab-btn-clients" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
           <span>👥</span> Dettes & Clients
         </button>
-        <button onclick="switchTab('rapports')" id="tab-btn-rapports" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
-          <span>📊</span> Clôture & Ventes
+        <button onclick="switchTab('rapports')" id="tab-btn-rapports" class="tab-btn masquer-mode-vendeur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+          <span>📊</span> Rentabilité & Bilan
         </button>
-        <button onclick="switchTab('params')" id="tab-btn-params" class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
+        <button onclick="switchTab('params')" id="tab-btn-params" class="tab-btn masquer-mode-vendeur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-sky-100 hover:bg-sky-700 whitespace-nowrap">
           <span>⚙️</span> Paramètres
         </button>
       </nav>
 
-      <!-- Quick Actions (Mobile Access, Backup, Audio) -->
+      <!-- Quick Actions (Mobile Access, Expenses, Closure Z, Mode Vendeur, Backup, Audio) -->
       <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs order-2 sm:order-3">
+        <!-- Bouton Dépenses Express -->
+        <button onclick="ouvrirModalDepenses()" class="px-2 sm:px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Enregistrer une dépense ou sortie de caisse">
+          <span>💸</span> <span class="hidden md:inline">Dépenses</span>
+        </button>
+
+        <!-- Bouton Clôture Journalière Rapport Z -->
+        <button onclick="ouvrirModalClotureZ()" class="px-2 sm:px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Clôture Journalière de Caisse (Rapport Z officiel)">
+          <span>📊</span> <span class="hidden md:inline">Clôture (Z)</span>
+        </button>
+
+        <!-- Bascule Mode Vendeur / Mode Gérant -->
+        <button onclick="basculerModeVendeur()" id="btn-mode-vendeur" class="px-2 sm:px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-emerald-300 border border-slate-700 rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Basculer entre Mode Gérant (tout visible) et Mode Vendeur (marges et coûts masqués)">
+          <span id="icon-mode-vendeur">🔑</span> <span id="label-mode-vendeur" class="hidden sm:inline">Gérant</span>
+        </button>
+
         <!-- Bouton Accès Téléphone Mondial -->
         <button onclick="openModalMobileAccess()" class="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-lg shadow flex items-center gap-1 transition" title="Consulter sur votre smartphone partout dans le monde">
           <span>📱</span> <span class="hidden sm:inline">Accès</span> Téléphone
@@ -133,7 +154,7 @@
           <span>💾</span> <span class="hidden md:inline">Sauvegarder</span>
         </button>
 
-        <button onclick="triggerRestoreUpload()" class="px-2 py-1.5 bg-sky-700 hover:bg-sky-600 border border-sky-500 text-white rounded-lg font-semibold flex items-center gap-1 text-xs hidden sm:flex" title="Restaurer un fichier de sauvegarde">
+        <button onclick="triggerRestoreUpload()" class="px-2 py-1.5 bg-sky-700 hover:bg-sky-600 border border-sky-500 text-white rounded-lg font-semibold flex items-center gap-1 text-xs hidden sm:flex masquer-mode-vendeur" title="Restaurer un fichier de sauvegarde">
           <span>📂</span>
         </button>
         <input type="file" id="file-restore-input" accept=".json" onchange="uploadBackup(event)" class="hidden">
@@ -154,7 +175,7 @@
         </button>
 
         <!-- Financial badges -->
-        <div class="bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
+        <div class="masquer-mode-vendeur bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
           <div class="text-[10px] text-sky-300">Valeur Stock</div>
           <div class="text-xs font-bold text-amber-300" id="header-stock-value">0 FCFA</div>
         </div>
@@ -167,7 +188,7 @@
   </header>
 
   <!-- MAIN CONTENT CONTAINER -->
-  <main class="flex-1 overflow-hidden relative">
+  <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
 
     <!-- ========================================== -->
     <!-- TAB 1 : CAISSE & POINT DE VENTE (POS)       -->
@@ -187,6 +208,26 @@
       <!-- Left: Products Catalog & Filters -->
       <div id="pos-catalog-panel" class="w-full lg:w-8/12 flex flex-col h-full border-r border-slate-200 bg-slate-50 relative">
         
+        <!-- Sélecteur de Mode de Vente : GROS vs DÉTAIL vs VENTE PAR MONTANT -->
+        <div class="px-3 pt-2 bg-white flex-none">
+          <div class="flex flex-wrap items-center justify-between p-1.5 bg-slate-100 rounded-xl border border-slate-200 gap-1.5">
+            <span class="text-[11px] font-bold text-slate-700 pl-1 flex items-center gap-1">
+              <span>🏷️</span> <span class="hidden sm:inline">Mode de Vente :</span>
+            </span>
+            <div class="grid grid-cols-3 gap-1 flex-1 max-w-md w-full sm:w-auto">
+              <button type="button" id="btn-pos-mode-gros" onclick="setPosSaleMode('GROS')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 shadow transition bg-sky-700 text-white" title="Vente par Adaka entier au tarif de gros">
+                <span>📦</span> Gros (Adaka)
+              </button>
+              <button type="button" id="btn-pos-mode-detail" onclick="setPosSaleMode('DETAIL')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition bg-white text-slate-700 border border-slate-300 hover:bg-slate-50" title="Vente au détail par sachets individuels">
+                <span>🛍️</span> Détail (Unités)
+              </button>
+              <button type="button" id="btn-pos-mode-montant" onclick="setPosSaleMode('MONTANT')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50" title="Vente au détail par montant encaissé (200F, 400F, 600F...)">
+                <span>💵</span> Par Montant
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Search and Quick Category Bar -->
         <div class="p-3 bg-white border-b border-slate-200 space-y-2 flex-none">
           <div class="flex gap-2">
@@ -219,6 +260,16 @@
             <button onclick="setCategoryFilter('Yaourt')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Yaourt</button>
             <button onclick="setCategoryFilter('Sachets Vente Détail')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sachets Détail (5F, 10F, 50F)</button>
             <button onclick="setCategoryFilter('Sacs Rayés & Bafana')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sacs Rayés & Bafana</button>
+          </div>
+        </div>
+
+        <!-- Flash / Fast-Selling Favorites Bar -->
+        <div id="pos-flash-favorites-container" class="px-3 py-1.5 bg-amber-50/90 border-b border-amber-200 flex items-center gap-2 overflow-x-auto no-scrollbar flex-none">
+          <span class="text-[11px] font-black text-amber-900 flex items-center gap-1 whitespace-nowrap">
+            <span>⚡</span> Ventes Flash :
+          </span>
+          <div id="pos-flash-favorites-list" class="flex items-center gap-1.5 flex-nowrap">
+            <!-- Dynamically populated by renderFlashFavorites() -->
           </div>
         </div>
 
@@ -284,6 +335,10 @@
               <span>Remise (FCFA) :</span>
               <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartTotals()" class="w-20 text-right p-0.5 border border-slate-300 rounded text-xs">
             </div>
+            <div class="flex justify-between items-center text-xs text-emerald-800 font-bold bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-200">
+              <span class="flex items-center gap-1"><span>📈</span> Marge brute estimée :</span>
+              <span id="cart-estimated-margin">0 FCFA</span>
+            </div>
             <div class="flex justify-between text-base font-black text-slate-900 pt-1 border-t border-slate-200">
               <span>NET À PAYER :</span>
               <span class="text-sky-700" id="cart-total">0 FCFA</span>
@@ -299,109 +354,470 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 2 : GESTION DES STOCKS & ARTICLES       -->
+    <!-- TAB NOUVEAU : MODULE APPROVISIONNEMENTS & FOURNISSEURS -->
     <!-- ========================================== -->
-    <div id="view-stock" class="tab-view hidden h-full flex flex-col p-4 bg-slate-100 overflow-y-auto">
+    <div id="view-appro" class="tab-view hidden flex-1 flex flex-col p-4 bg-slate-100 overflow-y-auto space-y-4 pb-32">
       
-      <!-- Top Stock Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">Total Références</div>
-            <div class="text-2xl font-black text-slate-800" id="stock-stat-total">55</div>
-          </div>
-          <div class="text-3xl p-2 bg-sky-50 rounded-lg">📦</div>
-        </div>
+      <!-- Navigation Rapide Mobile : Écran 1 (Formulaire) vs Écran 2 (Historique & Fournisseurs) -->
+      <div class="sm:hidden flex items-center bg-white p-1 rounded-xl border border-sky-300 shadow-sm gap-1">
+        <button type="button" onclick="basculerVueApproMobile('form')" id="btn-appro-mobile-form" class="flex-1 py-2 px-2 text-xs font-bold rounded-lg bg-sky-700 text-white shadow transition flex items-center justify-center gap-1">
+          <span>📝</span> Nouveau Bon d'Entrée
+        </button>
+        <button type="button" onclick="basculerVueApproMobile('second-screen')" id="btn-appro-mobile-second" class="flex-1 py-2 px-2 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1">
+          <span>📜</span> Deuxième Écran (Historique)
+        </button>
+      </div>
 
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">Valeur Totale du Stock</div>
-            <div class="text-2xl font-black text-emerald-600" id="stock-stat-valeur">0 FCFA</div>
-          </div>
-          <div class="text-3xl p-2 bg-emerald-50 rounded-lg">💰</div>
+      <!-- En-tête du Module -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <span>📥</span> Approvisionnements & Fournisseurs
+          </h2>
+          <p class="text-xs text-slate-500">Gestion des entrées de stock, frais de transport, calcul automatique des marges et suivi des dettes fournisseurs</p>
         </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">Stock Faible (< 1 Adaka)</div>
-            <div class="text-2xl font-black text-amber-500" id="stock-stat-faible">0</div>
-          </div>
-          <div class="text-3xl p-2 bg-amber-50 rounded-lg">⚠️</div>
-        </div>
-
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">En Rupture de Stock (0)</div>
-            <div class="text-2xl font-black text-rose-500" id="stock-stat-rupture">0</div>
-          </div>
-          <div class="text-3xl p-2 bg-rose-50 rounded-lg">🛑</div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openModalAddSupplier()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <span>➕</span> Nouveau Fournisseur
+          </button>
+          <button type="button" onclick="openModalAddProduct()" class="px-3.5 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <span>➕</span> Nouvel Article
+          </button>
         </div>
       </div>
 
-      <!-- Action Toolbar -->
-      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2 flex-1 max-w-lg">
-          <input type="text" id="stock-table-search" oninput="renderStockTable()" placeholder="Filtrer un sachet, marque, taille..." class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-sky-500">
-          
-          <select id="stock-table-cat" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white">
-            <option value="">Toutes catégories</option>
-            <option value="Glaçon">Glaçon</option>
-            <option value="Jus">Jus</option>
-            <option value="Kavi (1/4)">Kavi (1/4)</option>
-            <option value="Demi (1/2)">Demi (1/2)</option>
-            <option value="Litre">Litre</option>
-            <option value="Foutoufoutou">Foutoufoutou</option>
-            <option value="Arachide">Arachide</option>
-            <option value="Yaourt">Yaourt</option>
-            <option value="Sachets Vente Détail">Sachets Détail</option>
-            <option value="Sacs Rayés & Bafana">Sacs Rayés</option>
-          </select>
-
-          <!-- Filtre Disponibilité -->
-          <select id="stock-table-status" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white">
-            <option value="">Tous les états</option>
-            <option value="EN_STOCK">🟢 En Stock</option>
-            <option value="FAIBLE">🟡 Faible (&lt;1)</option>
-            <option value="RUPTURE">🔴 Rupture (0)</option>
-          </select>
+      <!-- Statistiques d'Approvisionnement (Grille 2x2 compacte sur mobile) -->
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">Total Achats</div>
+            <div class="text-base sm:text-xl font-black text-slate-800" id="stat-appro-total-achats">0 FCFA</div>
+          </div>
+          <div class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-sky-50 rounded-lg text-sky-700">🛒</div>
         </div>
 
-        <div class="flex items-center gap-1.5">
-          <button onclick="openModalAddProduct()" class="px-3 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
-            ➕ Nouvel Article
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">Frais / Transport</div>
+            <div class="text-base sm:text-xl font-black text-amber-600" id="stat-appro-total-frais">0 FCFA</div>
+          </div>
+          <div class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-amber-50 rounded-lg text-amber-600">🚚</div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">Coût Réel Total</div>
+            <div class="text-base sm:text-xl font-black text-indigo-700" id="stat-appro-cout-reel">0 FCFA</div>
+          </div>
+          <div class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-50 rounded-lg text-indigo-600">📊</div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">Dettes Fournisseurs</div>
+            <div class="text-base sm:text-xl font-black text-rose-600" id="stat-appro-dettes-fournisseurs">0 FCFA</div>
+          </div>
+          <div class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-rose-50 rounded-lg text-rose-600">📑</div>
+        </div>
+      </div>
+
+      <!-- SECTION 1 : FORMULAIRE D'APPROVISIONNEMENT & CALCULATEUR EN TEMPS RÉEL -->
+      <div id="section-appro-form" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="border-b pb-3 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              <span>📝</span> Nouveau Bon d'Approvisionnement / Entrée d'Achat
+            </h3>
+            <p class="text-[11px] text-slate-500">Renseignez vos coûts et vos prix prévus pour calculer immédiatement la rentabilité commerciale</p>
+          </div>
+          <span class="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1">
+            <span>⚡</span> Calcul instantané des marges
+          </span>
+        </div>
+
+        <form onsubmit="soumettreApprovisionnement(event)" id="form-appro" class="space-y-4 text-xs">
+          
+          <!-- Ligne 1 : Fournisseur, Date, Mode Règlement -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Fournisseur :</label>
+              <div class="flex gap-1.5">
+                <select id="appro-fournisseur-select" class="flex-1 p-2 border border-slate-300 rounded-lg bg-white font-medium focus:ring-1 focus:ring-sky-500" required>
+                  <!-- Dynamically populated -->
+                </select>
+                <button type="button" onclick="openModalAddSupplier()" class="px-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-slate-700" title="Ajouter un nouveau fournisseur">➕</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Date d'Achat / Arrivée :</label>
+              <input type="date" id="appro-date" class="w-full p-2 border border-slate-300 rounded-lg font-medium" required>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Mode de Paiement Fournisseur :</label>
+              <select id="appro-mode-paiement" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium">
+                <option value="ESPECES">💵 Comptant Espèces</option>
+                <option value="MOBILE_MONEY">📱 Mobile Money (Flooz / T-Money)</option>
+                <option value="CREDIT">⚠️ À Crédit (Dette Fournisseur)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Ligne 2 : Article, Quantité, Unité -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-semibold text-slate-700">Article Approvisionné :</label>
+                <span class="text-[11px] text-sky-700 font-bold" id="appro-selected-product-badge">Sélection par nom complet</span>
+              </div>
+              <!-- Recherche instantanée d'article -->
+              <div class="relative mb-1.5">
+                <input type="text" id="appro-product-search" oninput="filterApproProductDropdown(this.value)" placeholder="🔍 Filtrer l'article par nom, code ou marque (ex: Viva le grand, SCH-002, Glaçon...)" class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium transition">
+              </div>
+              <div class="flex gap-1.5">
+                <select id="appro-product-select" onchange="onApproProductChange()" class="flex-1 p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800 text-xs focus:ring-1 focus:ring-sky-500" required>
+                  <!-- Dynamically populated -->
+                </select>
+                <button type="button" onclick="openModalAddProduct()" class="px-2.5 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-slate-700 flex items-center gap-1 text-xs" title="Créer un nouvel article">➕ Créer</button>
+              </div>
+              <!-- Fiche récapitulative visuelle de confirmation du produit sélectionné -->
+              <div id="appro-product-selected-info" class="mt-2 p-2.5 bg-sky-50/80 border border-sky-200 rounded-xl text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                  <div class="font-black text-slate-900 text-xs flex items-center gap-1.5 flex-wrap">
+                    <span id="appro-info-code" class="px-1.5 py-0.5 bg-sky-100 text-sky-800 border border-sky-300 rounded font-mono font-bold text-[10px]">SCH-000</span>
+                    <span id="appro-info-nom" class="text-sky-950 font-bold">Sélectionnez un article</span>
+                  </div>
+                  <span id="appro-info-stock" class="font-bold text-emerald-800 text-[11px] bg-emerald-100 px-2 py-0.5 rounded-full">Stock : -</span>
+                </div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 pt-0.5 border-t border-sky-100">
+                  <span>Marque : <b id="appro-info-marque" class="text-sky-800 font-bold">-</b></span>
+                  <span>Conditionnement : <b id="appro-info-conditionnement" class="text-slate-800 font-bold">-</b></span>
+                  <span>Tarif Gros actuel : <b id="appro-info-prix-gros" class="text-slate-800 font-bold">-</b></span>
+                  <span>Tarif Détail : <b id="appro-info-prix-detail" class="text-amber-800 font-bold">-</b></span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Quantité Achetée & Unité :</label>
+              <div class="flex gap-1.5">
+                <input type="number" step="0.1" min="0.1" id="appro-quantite" value="1" oninput="calculerMargesApproEnDirect()" class="w-24 p-2 border border-slate-300 rounded-lg font-bold text-center text-sm" required>
+                <select id="appro-unite" class="flex-1 p-2 border border-slate-300 rounded-lg bg-white font-medium">
+                  <option value="Adaka">Adaka (Balle/Gros)</option>
+                  <option value="Carton">Carton</option>
+                  <option value="Paquet">Paquet</option>
+                  <option value="Sac 50kg">Sac 50kg</option>
+                  <option value="Unité">Unité</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ligne 3 : Coût Achat Unitaire, Frais de Transport / Manutention -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Prix d'Achat Unitaire (FCFA) :</label>
+              <input type="number" step="50" min="0" id="appro-prix-achat" oninput="calculerMargesApproEnDirect()" placeholder="Ex: 15000" class="w-full p-2 border border-slate-300 rounded-lg font-bold text-sky-900 bg-white" required>
+              <span class="text-[10px] text-slate-500">Prix payé au fournisseur par unité d'achat</span>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Frais de Transport / Manutention (FCFA) :</label>
+              <input type="number" step="50" min="0" id="appro-frais-transport" oninput="calculerMargesApproEnDirect()" value="0" placeholder="Ex: 500 (transport au marché, portefaix...)" class="w-full p-2 border border-slate-300 rounded-lg font-bold text-amber-900 bg-white">
+              <span class="text-[10px] text-slate-500">Frais d'approche ajoutés au coût total d'acquisition</span>
+            </div>
+          </div>
+
+          <!-- Ligne 4 : Prix de Vente Prévus (Gros et Détail) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-sky-50/60 p-3 rounded-xl border border-sky-200">
+            <div>
+              <label class="block font-bold text-sky-950 mb-1">Prix de Vente en Gros Prévu (FCFA) :</label>
+              <input type="number" step="50" min="0" id="appro-prix-vente-gros" oninput="calculerMargesApproEnDirect()" placeholder="Ex: 16000" class="w-full p-2 border border-sky-300 rounded-lg font-bold text-sky-950 bg-white" required>
+              <span class="text-[10px] text-sky-700">Prix pour vente en gros (par Adaka / carton entier)</span>
+            </div>
+
+            <div>
+              <label class="block font-bold text-sky-950 mb-1">Prix de Vente au Détail (Adaka Entier) (FCFA) :</label>
+              <input type="number" step="50" min="0" id="appro-prix-vente-detail" oninput="calculerMargesApproEnDirect()" placeholder="Ex: 18000" class="w-full p-2 border border-sky-300 rounded-lg font-bold text-sky-950 bg-white">
+              <span class="text-[10px] text-sky-700">Valeur totale de revente de l'Adaka au détail</span>
+            </div>
+          </div>
+
+          <!-- Ligne 5 : Conditionnement en Unités & Prix au Détail par Sachet (Section 12 Adaka) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+            <div>
+              <label class="block font-bold text-amber-950 mb-1">Unités / Sachets par Adaka :</label>
+              <input type="number" step="1" min="1" id="appro-unites-par-adaka" value="20" oninput="calculerMargesApproEnDirect()" class="w-full p-2 border border-amber-300 rounded-lg font-bold text-amber-950 bg-white" required>
+              <span class="text-[10px] text-amber-800 font-medium">Ex: 10, 20 ou 30 sachets par Adaka (utilisé pour convertir et fractionner)</span>
+            </div>
+
+            <div>
+              <label class="block font-bold text-amber-950 mb-1">Prix Détail par Sachet / Unité (FCFA) :</label>
+              <input type="number" step="5" min="0" id="appro-prix-vente-detail-unite" oninput="calculerMargesApproEnDirect()" placeholder="Ex: 100 FCFA" class="w-full p-2 border border-amber-300 rounded-lg font-bold text-amber-950 bg-white" required>
+              <span class="text-[10px] text-amber-800 font-medium">Tarif appliqué lors de la vente au détail par sachet ou par montant (200F, 400F...)</span>
+            </div>
+          </div>
+
+          <!-- TABLEAU D'AFFICHAGE DU CALCUL AUTOMATIQUE DES MARGES (EN DIRECT) -->
+          <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 border-2 border-emerald-300 p-4 rounded-xl shadow-inner space-y-2.5">
+            <div class="flex items-center justify-between border-b border-emerald-200 pb-1.5">
+              <span class="font-bold text-emerald-950 flex items-center gap-1.5">
+                <span>🧮</span> Indicateurs de Rentabilité & Marges Calculées Automatiquement
+              </span>
+              <span class="text-[11px] text-emerald-800 font-semibold" id="appro-stock-actuel-badge">Stock actuel : 0 Adaka (0 u)</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div class="bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <div class="text-[10px] text-slate-500 font-semibold">Coût Réel d'Acquisition</div>
+                <div class="text-sm font-black text-slate-800" id="calc-cout-reel-total">0 FCFA</div>
+                <div class="text-[9px] text-slate-400" id="calc-cout-unitaire-reel">(0 F / adaka)</div>
+              </div>
+
+              <div class="bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <div class="text-[10px] text-slate-500 font-semibold">Marge Gros / Adaka</div>
+                <div class="text-sm font-black text-emerald-700" id="calc-marge-unitaire">0 FCFA</div>
+                <div class="text-[9px] text-emerald-600 font-semibold" id="calc-marge-totale-label">Marge totale : 0 F</div>
+              </div>
+
+              <div class="bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <div class="text-[10px] text-slate-500 font-semibold">Taux de Marge (%)</div>
+                <div class="text-sm font-black text-sky-700" id="calc-taux-marge">0.0 %</div>
+                <div class="text-[9px] text-slate-400">(Marge ÷ Coût d'achat)</div>
+              </div>
+
+              <div class="bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <div class="text-[10px] text-slate-500 font-semibold">Taux de Marque (%)</div>
+                <div class="text-sm font-black text-indigo-700" id="calc-taux-marque">0.0 %</div>
+                <div class="text-[9px] text-slate-400">(Marge ÷ Prix de vente)</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-emerald-200/60 text-xs">
+              <div class="bg-white/70 p-1.5 rounded-lg border border-emerald-100 flex justify-between items-center">
+                <span class="text-slate-500 text-[11px]">Coût d'un sachet :</span>
+                <strong class="text-slate-900 font-bold" id="calc-cout-unite-sachet">0 FCFA</strong>
+              </div>
+              <div class="bg-white/70 p-1.5 rounded-lg border border-emerald-100 flex justify-between items-center">
+                <span class="text-slate-500 text-[11px]">Marge brute / sachet :</span>
+                <strong class="text-emerald-700 font-bold" id="calc-marge-unite-sachet">+0 FCFA</strong>
+              </div>
+              <div class="bg-white/70 p-1.5 rounded-lg border border-emerald-100 flex justify-between items-center">
+                <span class="text-slate-500 text-[11px]">Stock projeté (Dual) :</span>
+                <strong class="text-sky-900 font-bold" id="calc-stock-projete">0 Adaka (0 u)</strong>
+              </div>
+            </div>
+
+            <div class="text-[11px] text-slate-600 pt-1 text-center sm:text-left">
+              CMP projeté par Adaka : <strong class="text-slate-900 font-bold" id="calc-cmp-projete">0 FCFA</strong>
+            </div>
+          </div>
+
+          <!-- Bouton de Soumission Anti-Double-Clic -->
+          <div class="flex items-center justify-between pt-2">
+            <span id="appro-status-msg" class="text-xs font-bold min-h-[1.2rem]"></span>
+            <button type="submit" id="btn-submit-appro" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow flex items-center gap-2 transition active:scale-95 text-xs">
+              <span>💾</span>
+              <span>Enregistrer l'Approvisionnement</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- SECTION 2 (DEUXIÈME ÉCRAN / BAS DE PAGE) : HISTORIQUE DES ACHATS & GESTION DES FOURNISSEURS -->
+      <div id="section-appro-second-screen" class="space-y-4">
+        
+        <!-- Onglets Second Écran : Historique Bons vs Répertoire Fournisseurs -->
+        <div class="flex border-b border-slate-200 gap-2">
+          <button type="button" onclick="setSecondScreenApproTab('achats')" id="tab-sub-appro-achats" class="px-4 py-2 font-bold text-xs rounded-t-xl bg-white border-t border-l border-r border-slate-200 text-sky-900 shadow-sm flex items-center gap-1.5">
+            <span>📜</span> Historique des Bons d'Achat (<span id="count-bons-appro">0</span>)
           </button>
-          <button onclick="openModalStockMovement()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
-            📥 Réapprovisionner
+          <button type="button" onclick="setSecondScreenApproTab('fournisseurs')" id="tab-sub-appro-fournisseurs" class="px-4 py-2 font-bold text-xs rounded-t-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center gap-1.5">
+            <span>👥</span> Carnet des Fournisseurs (<span id="count-fournisseurs">0</span>)
           </button>
-          <button onclick="openModalStockJournal()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow" title="Historique complet des entrées / sorties de stock">
-            📜 Journal Mouvements
+        </div>
+
+        <!-- Volet A : Historique des Approvisionnements -->
+        <div id="sub-panel-appro-achats" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-3 bg-slate-50 border-b flex flex-wrap items-center justify-between gap-2 text-xs">
+            <input type="text" id="filter-appro-search" oninput="renderApproTable()" placeholder="Filtrer bon, fournisseur, article..." class="p-1.5 border rounded-lg w-64 bg-white">
+            <div class="text-slate-500 text-[11px]">Toutes les entrées de stock avec leurs coûts réels et marges</div>
+          </div>
+          <div class="overflow-x-auto max-h-96 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b text-slate-600 font-bold uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="p-2.5">Date & Bon N°</th>
+                  <th class="p-2.5">Article & Code Produit</th>
+                  <th class="p-2.5">Fournisseur</th>
+                  <th class="p-2.5 text-center">Quantité</th>
+                  <th class="p-2.5 text-center">Stock Avant ➔ Après</th>
+                  <th class="p-2.5 text-right">Prix Achat</th>
+                  <th class="p-2.5 text-right text-indigo-900">Coût Total</th>
+                  <th class="p-2.5 text-right text-emerald-800">Marge Brute</th>
+                  <th class="p-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="appro-table-body" class="divide-y divide-slate-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Volet B : Répertoire des Fournisseurs -->
+        <div id="sub-panel-appro-fournisseurs" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hidden">
+          <div class="p-3 bg-slate-50 border-b flex items-center justify-between text-xs">
+            <div class="font-bold text-slate-700">Liste des Fournisseurs Partenaires</div>
+            <button onclick="openModalAddSupplier()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold">
+              ➕ Nouveau Fournisseur
+            </button>
+          </div>
+          <div class="overflow-x-auto max-h-96 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b text-slate-600 font-bold uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="p-2.5">Nom du Fournisseur</th>
+                  <th class="p-2.5">Téléphone / Contact</th>
+                  <th class="p-2.5">Adresse / Emplacement</th>
+                  <th class="p-2.5 text-right">Dette Due au Fournisseur</th>
+                  <th class="p-2.5">Notes</th>
+                  <th class="p-2.5 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="suppliers-table-body" class="divide-y divide-slate-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2 : GESTION DES STOCKS & ARTICLES       -->
+    <!-- ========================================== -->
+    <div id="view-stock" class="tab-view hidden flex-1 flex flex-col p-3 sm:p-4 bg-slate-100 overflow-y-auto pb-32">
+      
+      <!-- Top Stock Summary Cards (Grille 2x2 compacte sur mobile, 4 cols sur desktop) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+        <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">Total Références</div>
+            <div class="text-lg sm:text-2xl font-black text-slate-800" id="stock-stat-total">57</div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-1.5 sm:p-2 bg-sky-50 rounded-lg">📦</div>
+        </div>
+
+        <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">Valeur Stock (Gros)</div>
+            <div class="text-sm sm:text-xl font-black text-emerald-600 truncate" id="stock-stat-valeur">0 FCFA</div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-1.5 sm:p-2 bg-emerald-50 rounded-lg">💰</div>
+        </div>
+
+        <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">Stock Faible (&lt; 1 Adaka)</div>
+            <div class="text-lg sm:text-2xl font-black text-amber-500" id="stock-stat-faible">0</div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-1.5 sm:p-2 bg-amber-50 rounded-lg">⚠️</div>
+        </div>
+
+        <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">Rupture de Stock</div>
+            <div class="text-lg sm:text-2xl font-black text-rose-500" id="stock-stat-rupture">0</div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-1.5 sm:p-2 bg-rose-50 rounded-lg">🛑</div>
+        </div>
+      </div>
+
+      <!-- Action Toolbar (100% Adaptée Smartphone : aucun élément écrasé ou coupé) -->
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        <!-- Barre de Recherche et Sélecteurs -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 max-w-2xl">
+          <div class="relative flex-1">
+            <input type="text" id="stock-table-search" oninput="renderStockTable()" placeholder="Rechercher : Sachet 5F, 10F, Glaçon, Viva, Bafana..." class="w-full text-xs px-3 py-2 pl-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <select id="stock-table-cat" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white font-medium text-slate-700">
+              <option value="">Toutes catégories</option>
+              <option value="Glaçon">Glaçon</option>
+              <option value="Jus">Jus</option>
+              <option value="Kavi (1/4)">Kavi (1/4)</option>
+              <option value="Demi (1/2)">Demi (1/2)</option>
+              <option value="Litre">Litre</option>
+              <option value="Foutoufoutou">Foutoufoutou</option>
+              <option value="Arachide">Arachide</option>
+              <option value="Yaourt">Yaourt</option>
+              <option value="Sachets Vente Détail">Sachets Détail</option>
+              <option value="Sacs Rayés & Bafana">Sacs Rayés</option>
+            </select>
+
+            <!-- Filtre Disponibilité -->
+            <select id="stock-table-status" onchange="renderStockTable()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-white font-medium text-slate-700">
+              <option value="">Tous les états</option>
+              <option value="EN_STOCK">🟢 En Stock</option>
+              <option value="FAIBLE">🟡 Faible (&lt;1)</option>
+              <option value="RUPTURE">🔴 Rupture (0)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Boutons d'Action Stock (Grille tactile responsive sur Smartphone, ligne flex sur PC) -->
+        <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto">
+          <button onclick="openModalAddProduct()" class="px-3 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow transition active:scale-95">
+            <span>➕</span> <span>Nouvel Article</span>
           </button>
-          <a href="/api/export-csv" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1">
-            📊 Excel (.csv)
+          <button onclick="openModalStockMovement(null, 'REAPPRO')" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow transition active:scale-95" title="Ajouter du stock reçu">
+            <span>📥</span> <span>Réapprovisionner le stock</span>
+          </button>
+          <button onclick="openModalStockMovement(null, 'AJUSTEMENT')" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow transition active:scale-95" title="Corriger stock physique ou perte">
+            <span>⚖️</span> <span>Ajuster Stock</span>
+          </button>
+          <button onclick="openModalStockJournal()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow transition active:scale-95" title="Historique complet des entrées / sorties de stock">
+            <span>📜</span> <span>Journal Mouvements</span>
+          </button>
+          <a href="/api/export-csv" class="col-span-2 sm:col-span-1 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition">
+            <span>📊</span> <span>Excel (.csv)</span>
           </a>
         </div>
       </div>
 
-      <!-- Inventory Table -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col">
-        <div class="overflow-y-auto flex-1">
-          <table class="w-full text-left text-xs">
+      <!-- Inventory Table (Horizontal Swipe natif pour mobile sans chevauchement) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <!-- Bandeau d'indication tactile mobile -->
+        <div class="sm:hidden px-3 py-1.5 bg-sky-50 text-sky-900 text-[11px] font-semibold flex items-center justify-between border-b border-sky-100">
+          <span class="flex items-center gap-1">👉 Glissez vers la droite pour voir tous les prix, marges et actions</span>
+          <span class="animate-pulse">↔️</span>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs min-w-[980px]">
             <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 text-slate-600 font-bold uppercase">
               <tr>
                 <th class="p-2.5">Code</th>
                 <th class="p-2.5">Désignation</th>
-                <th class="p-2.5">Taille</th>
-                <th class="p-2.5">Couleur</th>
+                <th class="p-2.5">Taille / Couleur</th>
                 <th class="p-2.5">Marque</th>
                 <th class="p-2.5">Conditionnement</th>
-                <th class="p-2.5 text-center">Stock</th>
-                <th class="p-2.5 text-right text-sky-800">Prix Unitaire (Marché) ✏️</th>
-                <th class="p-2.5 text-right">Valeur Stock</th>
+                <th class="p-2.5 text-center">Stock Disponible (Dual)</th>
+                <th class="p-2.5 text-right">Coût Achat (CMP)</th>
+                <th class="p-2.5 text-right text-sky-800">Prix Gros (Adaka) ✏️</th>
+                <th class="p-2.5 text-right text-amber-800">Prix Détail (Sachet) ✏️</th>
+                <th class="p-2.5 text-right text-emerald-800">Marge Gros</th>
+                <th class="p-2.5 text-center">% Marge</th>
                 <th class="p-2.5 text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="stock-table-body" class="divide-y divide-slate-100">
-              <!-- Populated dynamically -->
+              <!-- Populated dynamically by app.js -->
             </tbody>
           </table>
         </div>
@@ -409,45 +825,240 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 3 : CLIENTS & CARNET DE CRÉDIT         -->
+    <!-- TAB 3 : GESTION DES DETTES & RÈGLEMENTS   -->
     <!-- ========================================== -->
-    <div id="view-clients" class="tab-view hidden h-full flex flex-col p-4 bg-slate-100 overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
+    <div id="view-clients" class="tab-view hidden flex-1 flex flex-col p-3 sm:p-4 bg-slate-100 overflow-y-auto pb-32">
+      
+      <!-- En-tête du Module -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h2 class="text-xl font-bold text-slate-800">Gestion des Clients & Carnet de Dettes</h2>
-          <p class="text-xs text-slate-500">Suivi des encours de crédit et règlements d'acomptes</p>
+          <h2 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+            <span>📑</span>
+            <span>Gestion des Dettes & Mise à Jour des Règlements</span>
+            <span class="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full border border-sky-300">Section 14</span>
+          </h2>
+          <p class="text-[11px] text-slate-500">Saisie des dettes antérieures, suivi des créances clients & dettes fournisseurs, règlements partiels et fiches d'historique</p>
         </div>
-        <button onclick="openModalAddCustomer()" class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
-          ➕ Ajouter un Client
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openModalNouvelleDette()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition active:scale-95">
+            <span>➕</span> <span>Enregistrer une dette existante</span>
+          </button>
+          <button onclick="openModalAddCustomer()" class="px-3 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition active:scale-95">
+            <span>👤</span> <span>Nouveau Client</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tableaux de Bord & Statistiques Financières (Section 14.F) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+        <!-- Total Créances Clients -->
+        <div class="bg-gradient-to-br from-sky-50 to-white p-3 rounded-2xl border border-sky-200 shadow-sm flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="text-[10px] sm:text-xs text-sky-800 font-bold uppercase tracking-wider truncate">Créances Clients (À Encaisser)</div>
+            <div class="text-base sm:text-2xl font-black text-sky-900 truncate" id="kpi-total-creances-clients">0 FCFA</div>
+            <div class="text-[10px] text-sky-700 flex items-center gap-1 mt-0.5">
+              <span>🔵</span> <span id="kpi-count-creances-actives">0 dette(s) client</span>
+            </div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-2 bg-sky-100 rounded-xl text-sky-700 flex-shrink-0">📥</div>
+        </div>
+
+        <!-- Total Dettes Fournisseurs -->
+        <div class="bg-gradient-to-br from-amber-50 to-white p-3 rounded-2xl border border-amber-200 shadow-sm flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="text-[10px] sm:text-xs text-amber-800 font-bold uppercase tracking-wider truncate">Dettes Fournisseurs (À Payer)</div>
+            <div class="text-base sm:text-2xl font-black text-amber-900 truncate" id="kpi-total-dettes-fournisseurs">0 FCFA</div>
+            <div class="text-[10px] text-amber-700 flex items-center gap-1 mt-0.5">
+              <span>🟠</span> <span id="kpi-count-dettes-fournisseurs">0 dette(s) fournisseur</span>
+            </div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-2 bg-amber-100 rounded-xl text-amber-700 flex-shrink-0">📤</div>
+        </div>
+
+        <!-- Total Règlements Encaissés -->
+        <div class="bg-gradient-to-br from-emerald-50 to-white p-3 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="text-[10px] sm:text-xs text-emerald-800 font-bold uppercase tracking-wider truncate">Total Encaissé (Clients)</div>
+            <div class="text-base sm:text-2xl font-black text-emerald-800 truncate" id="kpi-total-reglements-encaisses">0 FCFA</div>
+            <div class="text-[10px] text-emerald-700 flex items-center gap-1 mt-0.5">
+              <span>✅</span> <span id="kpi-count-reglements-encaisses">0 versement(s)</span>
+            </div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-2 bg-emerald-100 rounded-xl text-emerald-700 flex-shrink-0">💰</div>
+        </div>
+
+        <!-- Total Règlements Versés aux Fournisseurs -->
+        <div class="bg-gradient-to-br from-purple-50 to-white p-3 rounded-2xl border border-purple-200 shadow-sm flex items-center justify-between">
+          <div class="min-w-0">
+            <div class="text-[10px] sm:text-xs text-purple-800 font-bold uppercase tracking-wider truncate">Total Versé (Fournisseurs)</div>
+            <div class="text-base sm:text-2xl font-black text-purple-900 truncate" id="kpi-total-reglements-verses">0 FCFA</div>
+            <div class="text-[10px] text-purple-700 flex items-center gap-1 mt-0.5">
+              <span>🤝</span> <span id="kpi-count-reglements-verses">0 paiement(s)</span>
+            </div>
+          </div>
+          <div class="text-2xl sm:text-3xl p-2 bg-purple-100 rounded-xl text-purple-700 flex-shrink-0">🏦</div>
+        </div>
+      </div>
+
+      <!-- Barre des statuts (Badges de décompte) -->
+      <div class="flex flex-wrap items-center gap-2 mb-3 bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+        <span class="font-bold text-slate-700 text-[11px]">État global des dettes :</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-800 rounded-lg font-bold border border-rose-200 text-[11px]" id="badge-statut-non-reglee">
+          ⏳ Non réglées : 0
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 rounded-lg font-bold border border-amber-200 text-[11px]" id="badge-statut-partielle">
+          🌗 Partielles : 0
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-lg font-bold border border-emerald-200 text-[11px]" id="badge-statut-soldee">
+          ✅ Soldées : 0
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-900 rounded-lg font-bold border border-red-300 text-[11px]" id="badge-statut-retard">
+          🚨 En retard : 0
+        </span>
+      </div>
+
+      <!-- Séparation Stricte : Sous-onglets de Navigation (Section 14.A) -->
+      <div class="flex items-center gap-1 sm:gap-2 border-b border-slate-200 overflow-x-auto no-scrollbar mb-3">
+        <button type="button" onclick="setDebtActiveTab('CLIENT')" id="tab-debt-client" class="px-3 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-white border-t border-l border-r border-slate-200 text-sky-900 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+          <span>🔵</span> <span>Clients qui me doivent</span> (<span id="count-tab-clients">0</span>)
+        </button>
+        <button type="button" onclick="setDebtActiveTab('FOURNISSEUR')" id="tab-debt-fournisseur" class="px-3 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+          <span>🟠</span> <span>Fournisseurs à payer</span> (<span id="count-tab-fournisseurs">0</span>)
+        </button>
+        <button type="button" onclick="setDebtActiveTab('REGLEMENTS')" id="tab-debt-reglements" class="px-3 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+          <span>📜</span> <span>Journal des Règlements</span> (<span id="count-tab-reglements">0</span>)
+        </button>
+        <button type="button" onclick="setDebtActiveTab('CLIENTS_LIST')" id="tab-debt-clients-list" class="px-3 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+          <span>👥</span> <span>Répertoire Clients</span> (<span id="count-tab-repertoire">0</span>)
         </button>
       </div>
 
-      <!-- Debt summary banner -->
-      <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 flex items-center justify-between">
-        <div>
-          <div class="text-xs text-amber-800 font-semibold uppercase tracking-wider">Total des Créances / Dettes Clients</div>
-          <div class="text-2xl font-black text-amber-700" id="total-dettes-clients">0 FCFA</div>
+      <!-- Barre d'outils et Filtres Dynamiques -->
+      <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+        <div class="flex flex-1 items-center gap-2">
+          <div class="relative flex-1 max-w-md">
+            <input type="text" id="filter-debt-search" oninput="renderDettesDashboard()" placeholder="Rechercher client, fournisseur, réf, motif, tél..." class="w-full text-xs px-3 py-2 pl-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+          </div>
+          <select id="filter-debt-statut" onchange="renderDettesDashboard()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-2 bg-white font-medium text-slate-700">
+            <option value="">Tous les états</option>
+            <option value="NON_REGLEE">⏳ Non réglées</option>
+            <option value="PARTIEL">🌗 Partielles</option>
+            <option value="SOLDEE">✅ Soldées</option>
+            <option value="EN_RETARD">🚨 En retard</option>
+          </select>
         </div>
-        <div class="text-3xl text-amber-600">📑</div>
+        <div class="flex items-center gap-2">
+          <select id="filter-debt-sort" onchange="renderDettesDashboard()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-2 bg-white font-medium text-slate-700">
+            <option value="date-desc">Date (Récentes d'abord)</option>
+            <option value="date-asc">Date (Anciennes d'abord)</option>
+            <option value="solde-desc">Solde Restant Décroissant</option>
+            <option value="solde-asc">Solde Restant Croissant</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Customers list -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
-            <tr>
-              <th class="p-3">Nom du Client</th>
-              <th class="p-3">Téléphone</th>
-              <th class="p-3">Adresse / Emplacement</th>
-              <th class="p-3 text-right">Dette Actuelle</th>
-              <th class="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="customers-table-body" class="divide-y divide-slate-100">
-            <!-- Populated dynamically -->
-          </tbody>
-        </table>
+      <!-- VOLET 1 : TABLE DES CRÉANCES CLIENTS -->
+      <div id="panel-debt-clients" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="sm:hidden px-3 py-1.5 bg-sky-50 text-sky-900 text-[11px] font-semibold flex items-center justify-between border-b border-sky-100">
+          <span class="flex items-center gap-1">👉 Glissez vers la droite pour voir les soldes, actions & reçus</span>
+          <span class="animate-pulse">↔️</span>
+        </div>
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs min-w-[850px]">
+            <thead class="bg-sky-50/70 border-b border-sky-100 text-sky-900 font-bold uppercase sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Réf. & Date</th>
+                <th class="p-3">Client</th>
+                <th class="p-3">Motif / Description</th>
+                <th class="p-3 text-right">Montant Initial</th>
+                <th class="p-3 text-right text-emerald-700">Déjà Réglé</th>
+                <th class="p-3 text-right text-sky-900 font-black">Solde Restant Dû</th>
+                <th class="p-3 text-center">Statut</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="debt-clients-table-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- VOLET 2 : TABLE DES DETTES FOURNISSEURS -->
+      <div id="panel-debt-fournisseurs" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hidden">
+        <div class="sm:hidden px-3 py-1.5 bg-amber-50 text-amber-900 text-[11px] font-semibold flex items-center justify-between border-b border-amber-100">
+          <span class="flex items-center gap-1">👉 Glissez vers la droite pour voir les soldes et règlements</span>
+          <span class="animate-pulse">↔️</span>
+        </div>
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs min-w-[850px]">
+            <thead class="bg-amber-50/70 border-b border-amber-100 text-amber-950 font-bold uppercase sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Réf. & Date</th>
+                <th class="p-3">Fournisseur</th>
+                <th class="p-3">Motif / Approvisionnement</th>
+                <th class="p-3 text-right">Montant Initial</th>
+                <th class="p-3 text-right text-emerald-700">Déjà Versé</th>
+                <th class="p-3 text-right text-amber-900 font-black">Solde Restant Dû</th>
+                <th class="p-3 text-center">Statut</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="debt-fournisseurs-table-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VOLET 3 : JOURNAL CHRONOLOGIQUE DES RÈGLEMENTS -->
+      <div id="panel-debt-reglements" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hidden">
+        <div class="sm:hidden px-3 py-1.5 bg-emerald-50 text-emerald-900 text-[11px] font-semibold flex items-center justify-between border-b border-emerald-100">
+          <span class="flex items-center gap-1">👉 Historique complet de tous les règlements successifs</span>
+          <span class="animate-pulse">↔️</span>
+        </div>
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs min-w-[900px]">
+            <thead class="bg-slate-50 border-b text-slate-700 font-bold uppercase sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Reçu N° & Date</th>
+                <th class="p-3">Type & Dette Réf</th>
+                <th class="p-3">Client / Fournisseur</th>
+                <th class="p-3">Mode & Réf</th>
+                <th class="p-3 text-right text-emerald-700 font-bold">Montant Réglé</th>
+                <th class="p-3 text-right text-slate-700">Solde Restant</th>
+                <th class="p-3">Auteur</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="debt-reglements-table-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VOLET 4 : RÉPERTOIRE GLOBAL DES CLIENTS & ENCOURS -->
+      <div id="panel-debt-clients-list" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hidden">
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs min-w-[700px]">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
+              <tr>
+                <th class="p-3">Nom du Client</th>
+                <th class="p-3">Téléphone</th>
+                <th class="p-3">Adresse / Emplacement</th>
+                <th class="p-3 text-right">Encours Total Dû</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body" class="divide-y divide-slate-100">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
     <!-- ========================================== -->
@@ -613,6 +1224,143 @@
   </main>
 
   <!-- ========================================== -->
+  <!-- MODAL VENTE AU DÉTAIL PAR MONTANT ENCAISSÉ (SECTION 12) -->
+  <!-- ========================================== -->
+  <div id="modal-vente-montant" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto border border-emerald-300">
+      
+      <!-- En-tête Modal -->
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 flex-none">
+        <div>
+          <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-1.5">
+            <span class="text-emerald-600">💵</span> Vente au Détail par Montant Encaissé
+          </h3>
+          <p class="text-[11px] text-slate-500">Fractionnement automatique de l'Adaka en sachets selon le montant payé</p>
+        </div>
+        <button type="button" onclick="closeModalVenteMontant()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Informations Produit Sélectionné -->
+      <div class="bg-gradient-to-r from-sky-50 to-emerald-50 p-3 rounded-xl border border-sky-200 space-y-1.5">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] font-mono font-bold text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded" id="vfm-code">SCH-001</span>
+            <h4 class="font-bold text-slate-800 text-sm mt-0.5" id="vfm-nom">Sachet Glaçon</h4>
+            <div class="text-[11px] text-slate-600" id="vfm-details">Grand - Transparent - Le Grand</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-slate-500 font-semibold uppercase">Stock Disponible</div>
+            <div class="text-xs font-black text-emerald-700 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs" id="vfm-stock-badge">
+              40 unités (2 Adaka)
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-1 border-t border-sky-200/60 text-center text-[11px]">
+          <div class="bg-white/80 p-1.5 rounded-lg border border-sky-100">
+            <span class="text-[10px] text-slate-400 block">Unités / Adaka</span>
+            <strong class="text-slate-700" id="vfm-unites-par-adaka">20 sachets</strong>
+          </div>
+          <div class="bg-white/80 p-1.5 rounded-lg border border-sky-100">
+            <span class="text-[10px] text-slate-400 block">Coût d'achat sachet</span>
+            <strong class="text-slate-700" id="vfm-cout-unitaire">80 FCFA</strong>
+          </div>
+          <div class="bg-white/80 p-1.5 rounded-lg border border-sky-100">
+            <span class="text-[10px] text-slate-400 block">Tarif Détail Standard</span>
+            <strong class="text-amber-800" id="vfm-tarif-detail-unite">100 FCFA / u</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saisie du Montant Payé (FCFA) -->
+      <div class="space-y-2">
+        <label class="block font-bold text-slate-700 text-xs">
+          1. Montant Encaissé en Espèces (FCFA) :
+        </label>
+        
+        <!-- Boutons Rapides de Montants Courants au Marché de Lomé / Tsévié -->
+        <div class="grid grid-cols-4 sm:grid-cols-4 gap-1.5">
+          <button type="button" onclick="setVenteMontantRapide(100)" class="btn-montant-pill py-2 px-1 bg-slate-100 hover:bg-emerald-100 text-slate-800 hover:text-emerald-900 border border-slate-200 rounded-lg text-xs font-bold transition">100 F</button>
+          <button type="button" onclick="setVenteMontantRapide(200)" class="btn-montant-pill py-2 px-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-bold transition">200 F</button>
+          <button type="button" onclick="setVenteMontantRapide(300)" class="btn-montant-pill py-2 px-1 bg-slate-100 hover:bg-emerald-100 text-slate-800 hover:text-emerald-900 border border-slate-200 rounded-lg text-xs font-bold transition">300 F</button>
+          <button type="button" onclick="setVenteMontantRapide(400)" class="btn-montant-pill py-2 px-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-bold transition">400 F</button>
+          <button type="button" onclick="setVenteMontantRapide(500)" class="btn-montant-pill py-2 px-1 bg-slate-100 hover:bg-emerald-100 text-slate-800 hover:text-emerald-900 border border-slate-200 rounded-lg text-xs font-bold transition">500 F</button>
+          <button type="button" onclick="setVenteMontantRapide(600)" class="btn-montant-pill py-2 px-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-bold transition">600 F</button>
+          <button type="button" onclick="setVenteMontantRapide(1000)" class="btn-montant-pill py-2 px-1 bg-slate-100 hover:bg-emerald-100 text-slate-800 hover:text-emerald-900 border border-slate-200 rounded-lg text-xs font-bold transition">1 000 F</button>
+          <button type="button" onclick="setVenteMontantRapide(2000)" class="btn-montant-pill py-2 px-1 bg-slate-100 hover:bg-emerald-100 text-slate-800 hover:text-emerald-900 border border-slate-200 rounded-lg text-xs font-bold transition">2 000 F</button>
+        </div>
+
+        <!-- Saisie Libre du Montant -->
+        <div class="relative">
+          <input type="number" step="5" min="5" id="vfm-input-montant" oninput="recalculerVenteMontant()" placeholder="Ou saisissez un autre montant en FCFA..." class="w-full text-base font-black px-4 py-2.5 pl-9 border-2 border-slate-300 focus:border-emerald-500 rounded-xl focus:outline-none">
+          <span class="absolute left-3 top-2.5 text-slate-400 font-bold">F</span>
+          <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">FCFA</span>
+        </div>
+      </div>
+
+      <!-- Résolution de Fraction & Quantité vendue -->
+      <div id="vfm-precision-box" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-300 space-y-1.5 text-xs">
+        <div class="font-bold text-amber-900 flex items-center gap-1">
+          <span>⚠️</span> Montant non multiple du prix standard. Choisissez la quantité :
+        </div>
+        <div class="grid grid-cols-2 gap-2" id="vfm-precision-options">
+          <!-- Dynamically filled with options -->
+        </div>
+      </div>
+
+      <!-- Carte Récapitulative du Fractionnement & Calcul de Rentabilité -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs">
+        <div class="font-bold text-slate-700 flex items-center justify-between">
+          <span class="flex items-center gap-1"><span>🧮</span> Résultat de la Transaction</span>
+          <span id="vfm-status-stock" class="text-[11px] font-bold text-emerald-700">Stock suffisant ✅</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 block font-medium">Sachets Vendus</span>
+            <strong class="text-sm text-slate-800" id="vfm-result-unites">0</strong>
+            <span class="text-[9px] text-slate-500 block" id="vfm-result-fraction">(0.00 Adaka)</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 block font-medium">Coût des Unités</span>
+            <strong class="text-sm text-slate-700" id="vfm-result-cout">0 FCFA</strong>
+            <span class="text-[9px] text-slate-400 block" id="vfm-result-cout-unit">(0 F / u)</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 block font-medium">Marge Brute</span>
+            <strong class="text-sm text-emerald-700" id="vfm-result-marge">+0 FCFA</strong>
+            <span class="text-[9px] text-emerald-600 block font-semibold" id="vfm-result-taux-marge">0 %</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 block font-medium">Stock Restant</span>
+            <strong class="text-sm text-sky-900" id="vfm-result-stock-restant">0 u</strong>
+            <span class="text-[9px] text-sky-700 block" id="vfm-result-stock-restant-adaka">(0.00 Adaka)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons d'Action Rapides -->
+      <div class="pt-1 flex flex-col sm:flex-row items-stretch gap-2">
+        <button type="button" onclick="ajouterAuPanierVenteMontant()" id="btn-vfm-cart" class="flex-1 py-2.5 px-3 bg-sky-700 hover:bg-sky-800 active:scale-95 text-white font-bold rounded-xl shadow text-xs flex items-center justify-center gap-1.5 transition">
+          <span>🛒</span> Ajouter au Panier
+        </button>
+
+        <button type="button" onclick="encaisserDirectVenteMontant()" id="btn-vfm-direct" class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-xl shadow text-xs flex items-center justify-center gap-1.5 transition">
+          <span>⚡</span> Encaisser Direct (Espèces)
+        </button>
+
+        <button type="button" onclick="closeModalVenteMontant()" class="py-2.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition">
+          Annuler
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
   <!-- MODAL : ENCAISSEMENT / PAIEMENT DE LA VENTE-->
   <!-- ========================================== -->
   <div id="modal-checkout" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
@@ -737,62 +1485,439 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2">
+        <!-- Conditionnement, Stock, Unités par Adaka, Seuil d'Alerte -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Conditionnement</label>
-            <input type="text" id="prod-lot" value="adaka" required class="w-full p-2 border rounded">
+            <input type="text" id="prod-lot" value="Adaka" placeholder="Adaka, Carton..." required class="w-full p-2 border rounded font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-sky-900 mb-1">Unités / Adaka</label>
+            <input type="number" step="1" min="1" id="prod-unites-par-adaka" value="20" oninput="calculerMargesFicheProduit()" required class="w-full p-2 border border-sky-300 rounded font-bold text-sky-900 bg-sky-50/30">
           </div>
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Stock Initial (Adaka)</label>
-            <input type="number" step="0.01" id="prod-stock" value="1" required class="w-full p-2 border rounded">
+            <input type="number" step="0.01" id="prod-stock" value="1" oninput="calculerMargesFicheProduit()" required class="w-full p-2 border rounded font-bold">
           </div>
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Prix Vente (FCFA)</label>
-            <input type="number" id="prod-prix" value="0" required class="w-full p-2 border rounded">
+            <label class="block font-semibold text-slate-700 mb-1">Seuil Alerte Stock</label>
+            <input type="number" step="0.5" id="prod-seuil" value="1" required class="w-full p-2 border rounded font-medium">
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2 border-t">
-          <button type="button" onclick="closeModalProduct()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded font-semibold">Annuler</button>
-          <button type="submit" class="px-4 py-2 bg-sky-700 text-white rounded font-bold">Enregistrer</button>
+        <!-- Tarifs : Prix d'Achat, Prix Gros, Prix Détail -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-700 text-xs flex items-center justify-between">
+            <span class="flex items-center gap-1"><span>💰</span> Tarification & Structure des Marges (FCFA)</span>
+            <span class="text-[10px] text-sky-700 font-semibold" id="prod-prix-gros-adaka-label">Gros & Détail</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Prix Achat (par Adaka)</label>
+              <input type="number" step="50" min="0" id="prod-prix-achat" oninput="calculerMargesFicheProduit()" value="0" required class="w-full p-2 border border-slate-300 rounded font-bold text-slate-800 bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-sky-900 mb-1">Prix Vente GROS (Adaka)</label>
+              <input type="number" step="50" min="0" id="prod-prix-gros" oninput="calculerMargesFicheProduit()" value="0" required class="w-full p-2 border border-sky-300 rounded font-bold text-sky-950 bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-amber-900 mb-1">Prix Détail (par Sachet) 💡</label>
+              <input type="number" step="5" min="0" id="prod-prix-detail-unite" oninput="calculerMargesFicheProduit()" value="0" required class="w-full p-2 border border-amber-300 rounded font-bold text-amber-950 bg-amber-50/30">
+            </div>
+          </div>
+          <input type="hidden" id="prod-prix-detail" value="0">
+
+          <!-- Marge calculée en direct Adaka & Unités -->
+          <div class="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 space-y-1.5 text-[11px] text-emerald-950">
+            <div class="flex flex-wrap items-center justify-between gap-1">
+              <span>Coût indicatif sachet : <strong id="prod-preview-cout-sachet" class="font-bold text-slate-800">0 FCFA</strong></span>
+              <span>Marge sachet détail : <strong id="prod-preview-marge-sachet" class="font-black text-emerald-700">+0 FCFA</strong></span>
+              <span>Stock en unités : <strong id="prod-preview-stock-unites" class="font-bold text-sky-800">0 unités</strong></span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between border-t border-emerald-200/60 pt-1">
+              <span>Marge Brute Gros : <strong id="prod-preview-marge" class="font-black text-emerald-700">0 FCFA</strong></span>
+              <span>Taux de Marge : <strong id="prod-preview-taux-marge" class="font-black text-sky-700">0.0%</strong></span>
+              <span>Taux de Marque : <strong id="prod-preview-taux-marque" class="font-black text-indigo-700">0.0%</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fournisseur Associé -->
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Fournisseur Associé :</label>
+          <select id="prod-fournisseur-select" class="w-full p-2 border rounded bg-white font-medium">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t">
+          <span id="prod-status-msg" class="text-xs font-bold min-h-[1.2rem]"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModalProduct()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold">Annuler</button>
+            <button type="submit" id="btn-save-prod" class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl font-bold shadow flex items-center gap-1.5">
+              <span>💾</span> Enregistrer l'Article
+            </button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL : REAPPROVISIONNEMENT RAPIDE         -->
+  <!-- MODAL : AJOUT / MODIFICATION FOURNISSEUR   -->
   <!-- ========================================== -->
-  <div id="modal-reappro" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
+  <div id="modal-supplier" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-slate-800 text-sm">Entrée de Stock (Adaka)</h3>
-        <button onclick="closeModalReappro()" class="text-slate-400 font-bold">✕</button>
+        <h3 class="font-bold text-slate-800 text-sm" id="modal-supplier-title">Nouveau Fournisseur Partenaire</h3>
+        <button onclick="closeModalSupplier()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
       </div>
 
-      <div class="text-xs space-y-2">
+      <form id="form-supplier" onsubmit="saveSupplier(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="supplier-id">
+
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">Choisir l'Article</label>
-          <select id="reappro-product-select" class="w-full p-2 border rounded bg-white font-medium">
+          <label class="block font-semibold text-slate-700 mb-1">Nom / Enseigne du Fournisseur :</label>
+          <input type="text" id="supplier-nom" placeholder="Ex: Usine Plastique Lomé, Importateur Assigamé..." required class="w-full p-2 border rounded-lg font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Téléphone / Contact :</label>
+            <input type="text" id="supplier-tel" placeholder="Ex: +228 90 11 22 33" class="w-full p-2 border rounded-lg font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Solde Dette Initiale :</label>
+            <input type="number" step="100" min="0" id="supplier-dette" value="0" class="w-full p-2 border rounded-lg font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Adresse / Emplacement au Marché :</label>
+          <input type="text" id="supplier-adresse" placeholder="Ex: Grand Marché Assigamé, Tsévié boutique..." class="w-full p-2 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Notes / Produits Fournis :</label>
+          <input type="text" id="supplier-notes" placeholder="Ex: Sachets 5F/10F, sacs 50kg, bafana..." class="w-full p-2 border rounded-lg">
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t">
+          <span id="supplier-status-msg" class="text-xs font-bold min-h-[1.2rem]"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModalSupplier()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold">Annuler</button>
+            <button type="submit" id="btn-save-supplier" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow flex items-center gap-1.5">
+              <span>💾</span> Enregistrer Fournisseur
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL : RÉAPPROVISIONNEMENT & AJUSTEMENT DE STOCK MOBILE -->
+  <!-- ======================================================= -->
+  <div id="modal-reappro" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[94vh] shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- En-tête avec titre et bouton fermer -->
+      <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+        <div>
+          <h3 class="font-black text-sm sm:text-base flex items-center gap-2" id="reappro-modal-title">
+            <span id="reappro-header-icon">📥</span>
+            <span id="reappro-header-text">Gestion Mobile du Stock</span>
+          </h3>
+          <p class="text-[11px] text-slate-300">Saisie tactile rapide • Calculs automatiques Adaka & Unités</p>
+        </div>
+        <button onclick="closeModalReappro()" class="text-slate-400 hover:text-white text-xl font-bold p-1 rounded-full transition active:scale-90" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Segmented Tabs : Deux opérations clairement distinctes (Section 10.3) -->
+      <div class="p-2 bg-slate-100 border-b border-slate-200 flex-shrink-0">
+        <div class="grid grid-cols-2 gap-1.5 bg-slate-200 p-1 rounded-2xl">
+          <button type="button" id="tab-btn-reappro" onclick="setReapproMode('REAPPRO')" class="py-2 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow bg-emerald-600 text-white">
+            <span class="text-sm">📥</span>
+            <span>Réapprovisionner</span>
+          </button>
+          <button type="button" id="tab-btn-ajustement" onclick="setReapproMode('AJUSTEMENT')" class="py-2 px-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+            <span class="text-sm">⚖️</span>
+            <span>Ajuster le Stock</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Corps du formulaire avec scrollbar douce, zéro défilement horizontal -->
+      <div class="p-3 sm:p-4 overflow-y-auto space-y-3.5 flex-1 text-xs">
+        
+        <!-- 1. Recherche & Choix du Produit -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-slate-700">1. Produit concerné :</label>
+          <div class="relative">
+            <input type="text" id="reappro-search-input" oninput="filterReapproProducts(this.value)" placeholder="🔍 Tapez un nom, taille ou code (ex: 5F, 10F, 50kg)..." class="w-full pl-8 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+            <span class="absolute left-2.5 top-2.5 text-slate-400 text-xs">🔎</span>
+            <button type="button" onclick="clearReapproSearch()" id="reappro-search-clear" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 font-bold text-xs">✕</button>
+          </div>
+
+          <!-- Liste des suggestions de recherche -->
+          <div id="reappro-search-results" class="hidden max-h-36 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg divide-y divide-slate-100 z-20">
+            <!-- Rempli dynamiquement -->
+          </div>
+
+          <!-- Sélecteur standard (Fallback & synchronisé) -->
+          <select id="reappro-product-select" onchange="onReapproProductSelect(this.value)" class="w-full p-2.5 border border-slate-300 rounded-xl bg-white font-bold text-slate-800 focus:border-sky-500 outline-none">
             <!-- Populated dynamically -->
           </select>
         </div>
 
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Quantité ajoutée (en Adaka / Carton)</label>
-          <input type="number" step="0.25" id="reappro-quantite" value="1" class="w-full p-2 border rounded text-lg font-bold">
+        <!-- 2. Fiche du Produit Sélectionné & Stock Actuel (Lecture seule) -->
+        <div id="reappro-selected-product-card" class="p-3 bg-gradient-to-br from-sky-50 to-indigo-50/40 rounded-2xl border border-sky-200 shadow-sm space-y-1.5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span id="reappro-prod-badge" class="px-2 py-0.5 rounded text-[10px] font-black bg-sky-200 text-sky-900 uppercase">SCH-001</span>
+              <h4 id="reappro-prod-nom" class="font-black text-sm text-slate-900 mt-0.5">Sachets 10F Bleu</h4>
+              <p id="reappro-prod-specs" class="text-[11px] text-slate-500">Marque Diamant • Taille Moyenne</p>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Conditionnement</span>
+              <span id="reappro-prod-packaging" class="text-xs font-black text-indigo-900 bg-white px-2 py-0.5 rounded-lg border border-indigo-100 shadow-xs inline-block">1 Adaka = 20 sachets</span>
+            </div>
+          </div>
+
+          <!-- Bandeau Stock Actuel Non Modifiable (Section 10.2) -->
+          <div class="mt-2 pt-2 border-t border-sky-200/80 flex items-center justify-between">
+            <span class="font-bold text-slate-700 flex items-center gap-1">
+              <span>📦</span> <span>Stock Actuel au Magasin :</span>
+            </span>
+            <div class="text-right">
+              <span id="reappro-prod-stock-badge" class="font-black text-xs sm:text-sm text-sky-900 bg-white px-2.5 py-1 rounded-xl border border-sky-300 shadow-xs inline-block">
+                0 Adaka (0 unités)
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Motif / Commentaire</label>
-          <input type="text" id="reappro-motif" value="Achat Fournisseur / Réappro" class="w-full p-2 border rounded">
+        <!-- 5. Unité de conditionnement (Champ 5) -->
+        <div class="space-y-1">
+          <label class="block font-bold text-slate-700">5. Unité de conditionnement :</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="reappro-unit-adaka" onclick="setReapproUnit('adaka')" class="py-2 px-2 rounded-xl text-xs font-bold border-2 border-emerald-600 bg-emerald-50 text-emerald-900 flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+              <span>📦</span>
+              <span id="reappro-unit-adaka-label">En Adaka (Carton/Paquet)</span>
+            </button>
+            <button type="button" id="reappro-unit-unites" onclick="setReapproUnit('unites')" class="py-2 px-2 rounded-xl text-xs font-bold border-2 border-slate-200 bg-slate-50 text-slate-600 hover:bg-white flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+              <span>🛍️</span>
+              <span id="reappro-unit-unites-label">En Sachets (Unités)</span>
+            </button>
+          </div>
         </div>
+
+        <!-- ============================================== -->
+        <!-- SECTION SPÉCIFIQUE MODE A : RÉAPPROVISIONNEMENT -->
+        <!-- ============================================== -->
+        <div id="section-reappro-fields" class="space-y-3">
+          <!-- 4. Quantité Ajoutée avec Grands Boutons Tactiles & Touches Rapides -->
+          <div class="space-y-1.5 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-200">
+            <label class="block font-bold text-emerald-950 flex items-center justify-between">
+              <span>4. Quantité à ajouter (Marchandise reçue) :</span>
+              <span id="reappro-qte-unit-name" class="text-[11px] text-emerald-700 font-semibold">Adaka</span>
+            </label>
+
+            <!-- Contrôles Stepper Géants (+ / -) et Saisie Clavier Tactile -->
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="stepReapproQuantity(-1)" class="w-12 h-12 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-2xl text-2xl font-black flex items-center justify-center shadow transition active:scale-90 flex-shrink-0">
+                -
+              </button>
+              <input type="number" step="any" min="0.01" id="reappro-quantite" inputmode="decimal" value="1" oninput="updateReapproCalculation()" class="flex-1 h-12 text-center text-2xl font-black text-emerald-950 bg-white border-2 border-emerald-500 rounded-2xl focus:ring-4 focus:ring-emerald-200 outline-none shadow-inner">
+              <button type="button" onclick="stepReapproQuantity(1)" class="w-12 h-12 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-2xl text-2xl font-black flex items-center justify-center shadow transition active:scale-90 flex-shrink-0">
+                +
+              </button>
+            </div>
+
+            <!-- Raccourcis d'incréments rapides au doigt -->
+            <div class="flex items-center justify-center gap-1.5 flex-wrap pt-1" id="reappro-quick-chips">
+              <button type="button" onclick="quickAddReapproQuantity(0.5)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 shadow-xs active:scale-95">+0.5</button>
+              <button type="button" onclick="quickAddReapproQuantity(1)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 shadow-xs active:scale-95">+1</button>
+              <button type="button" onclick="quickAddReapproQuantity(2)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 shadow-xs active:scale-95">+2</button>
+              <button type="button" onclick="quickAddReapproQuantity(5)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 shadow-xs active:scale-95">+5</button>
+              <button type="button" onclick="quickAddReapproQuantity(10)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 shadow-xs active:scale-95">+10</button>
+            </div>
+
+            <!-- Conversion équivalente instantanée -->
+            <div class="text-center font-bold text-[11px] text-emerald-800 bg-emerald-100/70 py-1 px-2 rounded-xl mt-1">
+              <span>Équivaut à : </span>
+              <strong id="reappro-conversion-label" class="font-black text-emerald-950">+20 sachets individuels</strong>
+            </div>
+          </div>
+
+          <!-- 6. Unités contenues dans un conditionnement -->
+          <div class="bg-indigo-50/60 p-2.5 rounded-2xl border border-indigo-200 flex items-center justify-between gap-2">
+            <div>
+              <label class="block font-bold text-indigo-950 text-xs">6. Nombre d'unités par conditionnement :</label>
+              <span class="text-[10px] text-indigo-700">Nombre de sachets dans 1 Adaka (ex: 20, 30...)</span>
+            </div>
+            <div class="w-24">
+              <input type="number" id="reappro-unites-par-adaka" min="1" step="1" oninput="updateReapproCalculation()" class="w-full p-2 bg-white border border-indigo-300 rounded-xl font-black text-center text-sm text-indigo-950 focus:border-indigo-600 outline-none">
+            </div>
+          </div>
+
+          <!-- 7, 8, 9, 10, 11 : Prix d'achat, Frais, Tarifs de vente Gros & Détail, Fournisseur -->
+          <div class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-0.5">7. Prix d'Achat unitaire (FCFA) :</label>
+                <input type="number" step="50" min="0" id="reappro-prix-achat" inputmode="numeric" oninput="updateReapproCalculation()" placeholder="Ex: 1600" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-black text-slate-900 outline-none focus:border-sky-500">
+                <span class="text-[10px] text-slate-400">Coût d'achat par adaka ou unité</span>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-0.5">8. Frais transport & annexes (FCFA) :</label>
+                <input type="number" step="50" min="0" id="reappro-frais-annexes" inputmode="numeric" oninput="updateReapproCalculation()" value="0" placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 outline-none focus:border-sky-500">
+                <span class="text-[10px] text-slate-400">Transport ou manutention (facultatif)</span>
+              </div>
+            </div>
+
+            <!-- Nouveaux Tarifs de Vente Gros et Détail (Champs 9 et 10) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+              <div>
+                <label class="block font-bold text-sky-900 mb-0.5">9. Prix de Vente en Gros (Adaka) :</label>
+                <input type="number" step="50" min="0" id="reappro-prix-gros" inputmode="numeric" oninput="updateReapproCalculation()" placeholder="Ex: 2000" class="w-full p-2.5 bg-white border border-sky-300 rounded-xl font-black text-sky-950 outline-none focus:border-sky-500">
+                <span class="text-[10px] text-sky-600">Tarif gros appliqué au produit (FCFA)</span>
+              </div>
+              <div>
+                <label class="block font-bold text-amber-900 mb-0.5">10. Prix de Vente au Détail (Sachet) :</label>
+                <input type="number" step="5" min="0" id="reappro-prix-detail" inputmode="numeric" oninput="updateReapproCalculation()" placeholder="Ex: 100" class="w-full p-2.5 bg-white border border-amber-300 rounded-xl font-black text-amber-950 outline-none focus:border-amber-500">
+                <span class="text-[10px] text-amber-600">Tarif unitaire sachet détail (FCFA)</span>
+              </div>
+            </div>
+
+            <!-- Fournisseur (Champ 11) -->
+            <div class="pt-1 border-t border-slate-200">
+              <label class="block font-bold text-slate-700 mb-0.5">11. Fournisseur partenaire :</label>
+              <select id="reappro-supplier-select" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 outline-none focus:border-sky-500">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SECTION SPÉCIFIQUE MODE B : AJUSTEMENT DE STOCK-->
+        <!-- ============================================== -->
+        <div id="section-ajustement-fields" class="hidden space-y-3">
+          <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-amber-950">Stock réel physique constaté :</label>
+              <span id="ajust-unit-name" class="text-[11px] text-amber-800 font-semibold">Adaka</span>
+            </div>
+
+            <!-- Stepper Géant pour le Stock Réel -->
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="stepAjustStockReel(-1)" class="w-12 h-12 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-2xl text-2xl font-black flex items-center justify-center shadow transition active:scale-90 flex-shrink-0">
+                -
+              </button>
+              <input type="number" step="any" min="0" id="ajust-stock-reel" inputmode="decimal" value="0" oninput="updateReapproCalculation()" class="flex-1 h-12 text-center text-2xl font-black text-amber-950 bg-white border-2 border-amber-500 rounded-2xl focus:ring-4 focus:ring-amber-200 outline-none shadow-inner">
+              <button type="button" onclick="stepAjustStockReel(1)" class="w-12 h-12 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-2xl text-2xl font-black flex items-center justify-center shadow transition active:scale-90 flex-shrink-0">
+                +
+              </button>
+            </div>
+
+            <!-- Raccourcis Rapides (0 Rupture, Remettre au stock théorique) -->
+            <div class="flex items-center justify-center gap-2 pt-0.5">
+              <button type="button" onclick="setAjustStockReel(0)" class="px-2.5 py-1 bg-white hover:bg-rose-50 border border-rose-300 rounded-xl text-xs font-bold text-rose-700 shadow-xs active:scale-95">🔴 0 (Rupture)</button>
+              <button type="button" onclick="resetAjustToCurrentStock()" class="px-2.5 py-1 bg-white hover:bg-sky-50 border border-sky-300 rounded-xl text-xs font-bold text-sky-800 shadow-xs active:scale-95">🔄 Stock Actuel</button>
+            </div>
+
+            <!-- Badge d'Écart Automatique Calculé en Direct (Section 10.3.B) -->
+            <div id="ajust-ecart-card" class="p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold bg-white border-amber-300">
+              <span class="text-slate-600">Écart calculé (Réel - Théorique) :</span>
+              <span id="ajust-ecart-badge" class="font-black text-sm px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900">
+                0
+              </span>
+            </div>
+
+            <div class="p-2 bg-amber-100/50 rounded-xl text-[11px] text-amber-900 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>Cet ajustement corrige le stock sans créer de faux frais d'achat ni d'opération financière.</span>
+            </div>
+          </div>
+
+          <!-- Motif de l'Ajustement (Obligatoire) -->
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-700">Motif de l'ajustement (Obligatoire) :</label>
+            <select id="ajust-motif-select" onchange="onAjustMotifChange(this.value)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 outline-none focus:border-amber-500">
+              <option value="Correction après inventaire">📋 Correction après inventaire (Comptage magasin)</option>
+              <option value="Perte ou casse">⚠️ Perte ou casse de marchandise</option>
+              <option value="Erreur de saisie">✏️ Correction d'erreur de saisie antérieure</option>
+              <option value="Autre motif">📝 Autre motif (préciser ci-dessous)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 12 & 13. Date & Commentaire (Champs 12 et 13) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-0.5">12. Date de l'opération :</label>
+            <input type="date" id="reappro-date-operation" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 outline-none focus:border-sky-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-0.5">13. Commentaire (Facultatif) :</label>
+            <input type="text" id="reappro-observation" placeholder="Ex: Livraison matin, sac déchiré..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 outline-none focus:border-sky-500">
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- RÉCAPITULATIF CLAIR AVANT VALIDATION           -->
+        <!-- ============================================== -->
+        <div id="reappro-summary-card" class="p-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-md space-y-2">
+          <div class="text-[10px] uppercase font-black tracking-wider text-sky-400 flex items-center justify-between">
+            <span>📋 Récapitulatif avant validation</span>
+            <span id="reappro-summary-mode-badge" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">RÉAPPROVISIONNEMENT</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-700/80 text-[11px]">
+            <div>
+              <span class="text-slate-400 block">Produit :</span>
+              <strong id="summary-prod-name" class="font-bold text-white truncate block">Sachets 10F Bleu</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Stock initial :</span>
+              <span id="summary-ancien-stock" class="font-bold text-slate-200">5 Adaka (100 u)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block" id="summary-movement-label">Quantité Reçue :</span>
+              <span id="summary-mouvement" class="font-black text-emerald-400 text-xs">+10 Adaka (+200 u)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Stock Total après réception :</span>
+              <strong id="summary-nouveau-stock" class="font-black text-white text-xs bg-emerald-600/60 px-2 py-0.5 rounded-lg border border-emerald-400/40 inline-block">15 Adaka (300 u)</strong>
+            </div>
+          </div>
+
+          <div id="summary-cout-row" class="pt-1.5 border-t border-slate-700/80 space-y-1 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300 font-semibold">Montant total de l'achat :</span>
+              <span id="summary-montant-total" class="font-black text-sky-300 text-sm">16 000 FCFA</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span>Coût d'achat par unité : <strong id="summary-cout-unitaire" class="text-emerald-300 font-bold">80 FCFA / u</strong></span>
+              <span>Valeur stock : <strong id="summary-valeur-stock" class="text-amber-300 font-bold">24 000 FCFA</strong></span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModalReappro()" class="px-3 py-1.5 bg-slate-200 rounded font-semibold text-xs">Annuler</button>
-        <button onclick="submitReappro()" class="px-3 py-1.5 bg-emerald-600 text-white rounded font-bold text-xs">Valider l'Entrée</button>
+      <!-- Footer STICKY avec boutons d'action tactiles et sécurité anti-double-clic -->
+      <div class="sticky bottom-0 bg-white border-t border-slate-200 p-3 flex items-center justify-between gap-2 z-30 shadow-lg flex-shrink-0">
+        <button type="button" onclick="closeModalReappro()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition active:scale-95">
+          Annuler
+        </button>
+        <button type="button" id="btn-submit-stock-operation" onclick="submitStockOperation()" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs shadow-lg flex items-center justify-center gap-1.5 transition active:scale-95">
+          <span id="btn-submit-stock-icon">💾</span>
+          <span id="btn-submit-stock-label">Enregistrer le réapprovisionnement</span>
+        </button>
       </div>
+
     </div>
   </div>
 
@@ -864,27 +1989,35 @@
   <!-- MODAL : JOURNAL DES MOUVEMENTS DE STOCK    -->
   <!-- ========================================== -->
   <div id="modal-stock-journal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl space-y-3 max-h-[85vh] flex flex-col">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-5 shadow-2xl space-y-3 max-h-[88vh] flex flex-col border border-indigo-200">
       <div class="flex justify-between items-center border-b pb-2 flex-none">
         <div>
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-            <span>📜</span> Journal Historique des Mouvements de Stock
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-1.5">
+            <span>📜</span> Journal Historique des Mouvements & Ventes Fractionnées
           </h3>
-          <p class="text-[11px] text-slate-500">Traçabilité complète des réapprovisionnements, ventes et ajustements</p>
+          <p class="text-[11px] text-slate-500">Traçabilité complète des adaka, sachets vendus, coûts réels et marges brutes dégagées</p>
         </div>
-        <button onclick="closeModalStockJournal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+        <button onclick="closeModalStockJournal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
       </div>
 
-      <div class="flex-1 overflow-y-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 text-slate-600 font-bold uppercase">
+      <!-- Filtre de recherche dans le journal -->
+      <div class="flex items-center gap-2 flex-none">
+        <input type="text" id="filter-stock-journal" oninput="filtrerJournalMouvements()" placeholder="Filtrer par nom d'article, type de vente, référence ticket..." class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg">
+      </div>
+
+      <div class="flex-1 overflow-x-auto overflow-y-auto">
+        <table class="w-full text-left text-xs min-w-[780px]">
+          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 text-slate-600 font-bold uppercase">
             <tr>
               <th class="p-2">Date & Heure</th>
               <th class="p-2">Article</th>
-              <th class="p-2">Type</th>
-              <th class="p-2 text-center">Quantité</th>
-              <th class="p-2 text-center">Avant / Après</th>
-              <th class="p-2">Motif</th>
+              <th class="p-2 text-center">Type / Mode</th>
+              <th class="p-2 text-center">Qté (Unités & Adaka)</th>
+              <th class="p-2 text-right">Montant Encaissé</th>
+              <th class="p-2 text-right">Coût Achat</th>
+              <th class="p-2 text-right text-emerald-800">Marge Brute</th>
+              <th class="p-2 text-center">Stock Avant ➔ Après</th>
+              <th class="p-2">Motif / Référence</th>
             </tr>
           </thead>
           <tbody id="stock-journal-table-body" class="divide-y divide-slate-100">
@@ -1177,7 +2310,718 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL 1 : NOUVELLE DETTE (MANUELLE / HISTORIQUE) -->
+  <!-- ========================================== -->
+  <div id="modal-nouvelle-dette" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      
+      <!-- En-tête -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📝</span>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Enregistrer une Dette (Nouvelle / Antérieure)</h3>
+            <p class="text-[11px] text-slate-500">Reprise d'historique ou vente/achat à crédit non informatisé</p>
+          </div>
+        </div>
+        <button onclick="closeModalNouvelleDette()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <form id="form-nouvelle-dette" onsubmit="saveNouvelleDette(event)" class="space-y-3.5 text-xs">
+        
+        <!-- Type de Dette : Séparation Stricte Client vs Fournisseur (Section 14.A) -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">Type de Dette (Catégorie strictement séparée) :</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-type-dette-client" onclick="setNouvelleDetteType('CLIENT')" class="py-2.5 px-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition bg-sky-50 border-sky-600 text-sky-900 shadow-sm">
+              <span class="text-base">🔵</span>
+              <div class="text-left">
+                <div class="leading-tight">Dette Client</div>
+                <div class="text-[10px] font-normal text-sky-700">Créance à encaisser</div>
+              </div>
+            </button>
+            <button type="button" id="btn-type-dette-fournisseur" onclick="setNouvelleDetteType('FOURNISSEUR')" class="py-2.5 px-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition bg-slate-50 border-slate-200 text-slate-600 hover:bg-amber-50">
+              <span class="text-base">🟠</span>
+              <div class="text-left">
+                <div class="leading-tight">Dette Fournisseur</div>
+                <div class="text-[10px] font-normal text-slate-500">Montant dû à payer</div>
+              </div>
+            </button>
+          </div>
+          <input type="hidden" id="nd-type" value="CLIENT">
+        </div>
+
+        <!-- Sélection ou Saisie à la Volée du Tiers -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-slate-700" id="label-nd-tier">Choisir ou Saisir le Client :</label>
+            <button type="button" onclick="toggleNouveauTierDette()" id="btn-toggle-nouveau-tier" class="text-[11px] font-bold text-sky-700 hover:text-sky-900">
+              ➕ Saisir un nouveau
+            </button>
+          </div>
+
+          <div id="nd-tier-select-container">
+            <select id="nd-tier-select" onchange="onTierDetteSelectChange()" class="w-full p-2.5 border border-slate-300 rounded-lg bg-white font-medium text-slate-800">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div id="nd-nouveau-tier-fields" class="space-y-2 hidden">
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1" id="label-nd-nom">Nom complet du Client * :</label>
+              <input type="text" id="nd-tier-nom" placeholder="Ex: Maman Akossiwa, Boutique Le Progrès..." class="w-full p-2 border border-slate-300 rounded-lg font-medium">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block font-semibold text-slate-600 mb-1">Téléphone (WhatsApp) :</label>
+                <input type="tel" id="nd-telephone" placeholder="+228 90 00 00 00" class="w-full p-2 border border-slate-300 rounded-lg font-mono">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-600 mb-1">Adresse / Emplacement :</label>
+                <input type="text" id="nd-adresse" placeholder="Marché, Ville..." class="w-full p-2 border border-slate-300 rounded-lg">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Montants & Calcul Automatique du Solde Restant Dû -->
+        <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-200 space-y-2.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Montant Initial de la Dette * :</label>
+              <div class="relative">
+                <input type="number" id="nd-montant-initial" min="100" step="50" required oninput="calculerSoldeNouvelleDette()" placeholder="50 000" class="w-full p-2.5 pr-14 border border-slate-300 rounded-lg font-black text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500">
+                <span class="absolute right-2.5 top-2.5 text-slate-500 font-bold text-xs">FCFA</span>
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1">Déjà réglé avant saisie :</label>
+              <div class="relative">
+                <input type="number" id="nd-montant-deja-regle" min="0" step="50" value="0" oninput="calculerSoldeNouvelleDette()" class="w-full p-2.5 pr-14 border border-slate-300 rounded-lg font-bold text-sm text-emerald-700">
+                <span class="absolute right-2.5 top-2.5 text-slate-500 font-bold text-xs">FCFA</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Solde restant calculé en direct -->
+          <div class="p-2.5 bg-white rounded-xl border border-emerald-300 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700">Solde Restant Dû (Calcul Automatique) :</span>
+            <span class="text-base font-black text-rose-700" id="nd-solde-calcule">0 FCFA</span>
+          </div>
+
+          <!-- Mode règlement initial si acompte présent -->
+          <div id="nd-box-reglement-initial" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-emerald-200 text-xs">
+            <div>
+              <label class="block text-slate-600 font-semibold mb-1">Mode de règlement de l'acompte :</label>
+              <select id="nd-mode-initial" class="w-full p-1.5 border rounded-lg bg-white">
+                <option value="ESPECES">💵 Espèces</option>
+                <option value="TMONEY">📱 TMoney</option>
+                <option value="FLOOZ">📱 Flooz</option>
+                <option value="VIREMENT">🏦 Virement Bancaire</option>
+                <option value="CHEQUE">📑 Chèque</option>
+                <option value="AUTRE">Autre</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 font-semibold mb-1">Réf / Reçu Acompte :</label>
+              <input type="text" id="nd-ref-initial" placeholder="N° transaction..." class="w-full p-1.5 border rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations & Dates -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Date de naissance / Opération :</label>
+            <input type="date" id="nd-date" class="w-full p-2 border border-slate-300 rounded-lg font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Date d'échéance (Optionnelle) :</label>
+            <input type="date" id="nd-date-echeance" class="w-full p-2 border border-slate-300 rounded-lg font-medium">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Motif / Description de la dette * :</label>
+            <input type="text" id="nd-description" required placeholder="Ex: Reliquat achat sachets 10F, avance..." class="w-full p-2 border border-slate-300 rounded-lg font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Référence Facture / Bon (Optionnel) :</label>
+            <input type="text" id="nd-reference" placeholder="Ex: FACT-2026-004, BON-012..." class="w-full p-2 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Observations & Notes :</label>
+          <input type="text" id="nd-observations" placeholder="Précisions sur les modalités convenues, garanties..." class="w-full p-2 border border-slate-300 rounded-lg">
+        </div>
+
+        <!-- Boutons d'Action -->
+        <div class="flex items-center justify-between pt-3 border-t">
+          <span id="nd-status-msg" class="text-xs font-bold min-h-[1.2rem]"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModalNouvelleDette()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold">
+              Annuler
+            </button>
+            <button type="submit" id="btn-submit-nouvelle-dette" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow flex items-center gap-1.5 transition active:scale-95">
+              <span>💾</span> <span>Enregistrer la Dette</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2 : ENREGISTRER UN RÈGLEMENT (SECTION 14.C & 14.D) -->
+  <!-- ========================================== -->
+  <div id="modal-reglement-dette" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      
+      <!-- En-tête -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl" id="rd-badge-icon">💵</span>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm" id="rd-modal-title">Enregistrer un Règlement de Dette</h3>
+            <p class="text-[11px] text-slate-500" id="rd-modal-subtitle">Paiement partiel ou solde avec traçabilité complète</p>
+          </div>
+        </div>
+        <button onclick="closeModalReglementDette()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <form id="form-reglement-dette" onsubmit="soumettreReglementDette(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="rd-dette-id">
+
+        <!-- Fiche d'identification de la dette -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-mono font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded text-[11px]" id="rd-dette-code">DET-0000</span>
+            <span class="font-bold text-xs" id="rd-dette-statut-badge">Non réglée</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-sm" id="rd-dette-tier-nom">Nom du Client / Fournisseur</span>
+            <span class="text-slate-500 font-mono text-xs" id="rd-dette-tel">+228 ...</span>
+          </div>
+          <div class="text-[11px] text-slate-600 flex justify-between">
+            <span>Motif : <strong class="text-slate-800" id="rd-dette-motif">-</strong></span>
+            <span class="text-slate-500" id="rd-dette-date">-</span>
+          </div>
+        </div>
+
+        <!-- Bilan des montants (Initial, Réglé, Solde Dû) -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-100 p-2 rounded-xl">
+            <div class="text-[10px] text-slate-500">Montant Initial</div>
+            <div class="font-bold text-slate-800 text-xs" id="rd-montant-initial">0 FCFA</div>
+          </div>
+          <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+            <div class="text-[10px] text-emerald-800">Déjà Réglé</div>
+            <div class="font-bold text-emerald-700 text-xs" id="rd-montant-deja-regle">0 FCFA</div>
+          </div>
+          <div class="bg-rose-50 p-2 rounded-xl border border-rose-200">
+            <div class="text-[10px] text-rose-800">Solde Restant Dû</div>
+            <div class="font-black text-rose-700 text-sm" id="rd-solde-restant">0 FCFA</div>
+          </div>
+        </div>
+
+        <!-- Saisie du Montant Payé -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label class="block font-bold text-slate-800">Montant du Règlement * :</label>
+            <span class="text-[11px] text-slate-500">Boutons rapides :</span>
+          </div>
+          
+          <div class="relative">
+            <input type="number" id="rd-montant" min="100" step="50" required oninput="calculerNouveauSoldeReglement()" placeholder="Entrez le montant en FCFA" class="w-full p-2.5 pr-14 border border-slate-300 rounded-xl font-black text-base text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <span class="absolute right-3 top-2.5 text-slate-500 font-bold text-xs">FCFA</span>
+          </div>
+
+          <!-- Boutons de Raccourcis Rapides (100% Solde, 50%, etc.) -->
+          <div class="grid grid-cols-4 gap-1.5 pt-1">
+            <button type="button" onclick="setReglementMontantRapide(1.0)" class="py-1 px-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition shadow-sm">
+              100% (Solde)
+            </button>
+            <button type="button" onclick="setReglementMontantRapide(0.5)" class="py-1 px-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-lg font-bold text-[11px] transition">
+              50%
+            </button>
+            <button type="button" onclick="setReglementMontantFixe(10000)" class="py-1 px-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition">
+              +10 000 F
+            </button>
+            <button type="button" onclick="setReglementMontantFixe(5000)" class="py-1 px-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition">
+              +5 000 F
+            </button>
+          </div>
+        </div>
+
+        <!-- Solde Projeté Après ce Règlement -->
+        <div class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-300 flex items-center justify-between">
+          <span class="font-bold text-slate-700 text-xs">Nouveau Solde Restant :</span>
+          <span class="text-base font-black text-emerald-800" id="rd-nouveau-solde">0 FCFA</span>
+        </div>
+
+        <!-- Alerte Anti-Trop-Perçu (Section 14.D.5) -->
+        <div id="rd-trop-percu-box" class="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2 hidden">
+          <div class="flex items-center gap-2 text-amber-900 font-bold text-xs">
+            <span>⚠️</span> <span>Trop-perçu détecté :</span>
+          </div>
+          <p class="text-[11px] text-amber-800" id="rd-trop-percu-msg">
+            Le montant saisi dépasse le solde restant dû.
+          </p>
+          <label class="flex items-center gap-2 font-bold text-slate-800 text-xs cursor-pointer">
+            <input type="checkbox" id="rd-forcer-trop-percu" class="rounded text-amber-600 focus:ring-amber-500">
+            <span>Confirmer et autoriser le trop-perçu (avance/crédit)</span>
+          </label>
+        </div>
+
+        <!-- Mode de Paiement & Référence Transaction -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Mode de Paiement * :</label>
+            <select id="rd-mode-paiement" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium">
+              <option value="ESPECES">💵 Espèces</option>
+              <option value="TMONEY">📱 TMoney (+228)</option>
+              <option value="FLOOZ">📱 Flooz (+228)</option>
+              <option value="VIREMENT">🏦 Virement Bancaire</option>
+              <option value="CHEQUE">📑 Chèque</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">N° Réf. Transaction / Reçu :</label>
+            <input type="text" id="rd-reference" placeholder="Ex: TMoney 241016..., CHQ-091" class="w-full p-2 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+
+        <!-- Date & Auteur de la Caisse -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Date du Règlement :</label>
+            <input type="date" id="rd-date" class="w-full p-2 border border-slate-300 rounded-lg font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Enregistré par (Caissier/Auteur) :</label>
+            <input type="text" id="rd-auteur" value="Caisse / Gérant" class="w-full p-2 border border-slate-300 rounded-lg">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Commentaire / Motif :</label>
+          <input type="text" id="rd-commentaire" placeholder="Ex: Règlement acompte 1er versement, espèces remises en boutique..." class="w-full p-2 border border-slate-300 rounded-lg">
+        </div>
+
+        <!-- Boutons d'Action -->
+        <div class="flex items-center justify-between pt-3 border-t">
+          <span id="rd-status-msg" class="text-xs font-bold min-h-[1.2rem]"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModalReglementDette()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold">
+              Annuler
+            </button>
+            <button type="submit" id="btn-submit-reglement" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow flex items-center gap-1.5 transition active:scale-95">
+              <span>✅</span> <span>Valider le Règlement</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3 : FICHE INDIVIDUELLE & HISTORIQUE (SECTION 14.E) -->
+  <!-- ========================================== -->
+  <div id="modal-fiche-dette" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      
+      <!-- En-tête -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📜</span>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Fiche Individuelle de Dette & Historique Chronologique</h3>
+            <p class="text-[11px] text-slate-500">Traçabilité complète des règlements, soldes et attestations</p>
+          </div>
+        </div>
+        <button onclick="closeModalFicheDette()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <!-- Informations Détaillées de la Dette d'Origine -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-bold text-sky-900 bg-sky-100 border border-sky-300 px-2.5 py-1 rounded-lg text-xs" id="fd-code">DET-0000</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg" id="fd-type-badge">🔵 Créance Client</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg" id="fd-statut-badge">Non réglée</span>
+          </div>
+          <div class="text-xs text-slate-500">Créée le : <strong class="text-slate-700" id="fd-date-creation">-</strong></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <span class="text-slate-500">Client / Fournisseur :</span>
+            <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span id="fd-tier-nom">-</span>
+              <a id="fd-tier-whatsapp" href="#" target="_blank" class="text-emerald-600 hover:text-emerald-700 text-base" title="Ouvrir WhatsApp">💬</a>
+            </div>
+            <div class="text-slate-500 font-mono text-[11px]" id="fd-tier-tel">-</div>
+          </div>
+          <div>
+            <span class="text-slate-500">Motif & Référence :</span>
+            <div class="font-semibold text-slate-800" id="fd-motif">-</div>
+            <div class="text-slate-500 font-mono text-[11px]" id="fd-reference">-</div>
+          </div>
+        </div>
+
+        <!-- Barre de Progression du Remboursement -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs font-bold">
+            <span class="text-slate-600">Progression du règlement :</span>
+            <span class="text-emerald-700 font-mono" id="fd-progression-pct">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+            <div id="fd-progression-bar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- 3 Cartes de Montant -->
+        <div class="grid grid-cols-3 gap-2 text-center pt-1">
+          <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+            <div class="text-[10px] text-slate-500 uppercase font-semibold">Montant Initial</div>
+            <div class="font-bold text-slate-900 text-xs sm:text-sm" id="fd-montant-initial">0 FCFA</div>
+          </div>
+          <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+            <div class="text-[10px] text-emerald-800 uppercase font-semibold">Total Réglé</div>
+            <div class="font-bold text-emerald-700 text-xs sm:text-sm" id="fd-total-regle">0 FCFA</div>
+          </div>
+          <div class="bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+            <div class="text-[10px] text-rose-800 uppercase font-semibold">Solde Restant Dû</div>
+            <div class="font-black text-rose-700 text-xs sm:text-base" id="fd-solde-restant">0 FCFA</div>
+          </div>
+        </div>
+
+        <!-- Observations -->
+        <div class="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200" id="fd-observations-box">
+          Observations : <span id="fd-observations" class="font-medium">-</span>
+        </div>
+      </div>
+
+      <!-- Historique Chronologique Complet de Tous les Règlements Successifs -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <span>📋</span> <span>Historique Chronologique des Versements</span>
+            <span class="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.2 rounded-full font-bold" id="fd-reglements-count">0</span>
+          </h4>
+          <button type="button" id="fd-btn-ajouter-reglement" onclick="openReglementFromFiche()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1 transition active:scale-95">
+            <span>💵</span> <span>Ajouter un Règlement</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-60 overflow-y-auto">
+          <table class="w-full text-left text-xs min-w-[550px]">
+            <thead class="bg-slate-100 border-b text-slate-600 font-bold uppercase sticky top-0 z-10">
+              <tr>
+                <th class="p-2.5">Date & Reçu N°</th>
+                <th class="p-2.5">Mode & Réf</th>
+                <th class="p-2.5 text-right text-emerald-800">Montant Payé</th>
+                <th class="p-2.5 text-right">Solde Restant</th>
+                <th class="p-2.5">Auteur</th>
+                <th class="p-2.5 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fd-table-reglements-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Boutons d'Action Globaux sur la Dette -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t">
+        <button type="button" onclick="partagerSituationFicheWhatsApp()" class="px-3.5 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+          <span>💬</span> <span>Partager Relevé WhatsApp</span>
+        </button>
+        <button type="button" onclick="imprimerAttestationDette()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+          <span>🖨️</span> <span>Imprimer Reçu / Situation</span>
+        </button>
+        <button type="button" onclick="closeModalFicheDette()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold">
+          Fermer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : CLÔTURE JOURNALIÈRE DE CAISSE (RAPPORT Z) -->
+  <!-- ========================================== -->
+  <div id="modal-cloture-z" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto">
+      
+      <!-- En-tête -->
+      <div class="flex justify-between items-center border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl p-2 bg-indigo-50 border border-indigo-200 rounded-xl">📊</span>
+          <div>
+            <h3 class="font-black text-slate-800 text-sm sm:text-base">Clôture Journalière de Caisse (Rapport Z)</h3>
+            <p class="text-[11px] text-slate-500">Contrôle de caisse, réconciliation des espèces & bénéfice net réel</p>
+          </div>
+        </div>
+        <button onclick="fermerModalClotureZ()" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
+      </div>
+
+      <!-- Sélecteur de date & infos boutique -->
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
+        <div class="flex items-center gap-2">
+          <label for="input-date-cloture-z" class="font-bold text-slate-700">Date de Clôture :</label>
+          <input type="date" id="input-date-cloture-z" onchange="actualiserApercuClotureZ()" class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="text-[11px] text-indigo-700 font-bold flex items-center gap-1">
+          <span>🏪</span> <span id="z-nom-boutique">COMMERCE DE SACHETS MIAKIARA</span>
+        </div>
+      </div>
+
+      <!-- 4 Cartes Clés d'Activité -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <div class="bg-sky-50 border border-sky-200 p-2.5 rounded-xl">
+          <div class="text-[10px] text-sky-800 font-semibold uppercase">C.A. Net du Jour</div>
+          <div class="text-sm sm:text-base font-black text-sky-900 mt-0.5" id="z-kpi-ca">0 FCFA</div>
+          <div class="text-[10px] text-sky-600 mt-0.5" id="z-kpi-tickets">0 vente(s)</div>
+        </div>
+        <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+          <div class="text-[10px] text-emerald-800 font-semibold uppercase">Marge Brute</div>
+          <div class="text-sm sm:text-base font-black text-emerald-900 mt-0.5" id="z-kpi-marge">0 FCFA</div>
+          <div class="text-[10px] text-emerald-600 mt-0.5">Sur ventes du jour</div>
+        </div>
+        <div class="bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+          <div class="text-[10px] text-rose-800 font-semibold uppercase">Dépenses Jour</div>
+          <div class="text-sm sm:text-base font-black text-rose-900 mt-0.5" id="z-kpi-depenses">0 FCFA</div>
+          <div class="text-[10px] text-rose-600 mt-0.5" id="z-kpi-depenses-count">0 sortie(s)</div>
+        </div>
+        <div class="bg-indigo-50 border border-indigo-200 p-2.5 rounded-xl">
+          <div class="text-[10px] text-indigo-800 font-semibold uppercase">Bénéfice Net Réel</div>
+          <div class="text-sm sm:text-base font-black text-indigo-900 mt-0.5" id="z-kpi-benefice-net">0 FCFA</div>
+          <div class="text-[10px] text-indigo-600 mt-0.5">Marge - Dépenses</div>
+        </div>
+      </div>
+
+      <!-- Détail Encaissements et Recouvrements -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs">
+        <div class="font-bold text-slate-800 flex items-center justify-between">
+          <span class="flex items-center gap-1.5"><span>💳</span> Ventilation des Règlements :</span>
+          <span class="text-[11px] text-slate-500 font-normal">Ventes + Recouvrements dettes</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <div class="text-[10px] text-slate-500">Espèces Ventes :</div>
+            <div class="font-bold text-slate-800" id="z-detail-especes-ventes">0 FCFA</div>
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <div class="text-[10px] text-slate-500">Mobile Money (T-Money/Flooz) :</div>
+            <div class="font-bold text-indigo-700" id="z-detail-momo-ventes">0 FCFA</div>
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <div class="text-[10px] text-slate-500">Ventes à Crédit :</div>
+            <div class="font-bold text-amber-700" id="z-detail-credit-ventes">0 FCFA</div>
+          </div>
+        </div>
+        <div class="pt-1 border-t border-slate-200 flex flex-wrap items-center justify-between text-slate-600 text-[11px]">
+          <div>Recouvrements Dettes reçus aujourd'hui : <strong class="text-emerald-700" id="z-detail-recouvrements">0 FCFA</strong> (dont <span id="z-detail-recouvrements-especes">0 FCFA</span> en espèces)</div>
+          <div>Dépenses payées en espèces : <strong class="text-rose-700" id="z-detail-depenses-especes">0 FCFA</strong></div>
+        </div>
+      </div>
+
+      <!-- Zone Clé : Contrôle Physique du Tiroir Caisse -->
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-3.5 rounded-2xl border-2 border-amber-300 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">💰</span>
+            <span class="font-bold text-slate-900 text-xs sm:text-sm">Contrôle Physique du Tiroir Caisse</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-500 block uppercase">Espèces Attendues</span>
+            <span class="font-black text-slate-900 font-mono text-sm sm:text-base" id="z-especes-theoriques">0 FCFA</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <div>
+            <label for="z-input-especes-physiques" class="block text-xs font-bold text-slate-800 mb-1">
+              Espèces Réellement Comptées dans le tiroir (FCFA) :
+            </label>
+            <input type="number" id="z-input-especes-physiques" oninput="calculerEcartClotureZ()" placeholder="Ex: 50000" class="w-full text-base sm:text-lg font-black font-mono px-3 py-2 border-2 border-amber-400 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900">
+          </div>
+
+          <!-- Badge Dynamique d'Écart de Caisse -->
+          <div id="z-box-ecart-caisse" class="p-2.5 rounded-xl border flex items-center gap-2.5 bg-white border-slate-200">
+            <span id="z-icon-ecart" class="text-xl">ℹ️</span>
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-500" id="z-titre-ecart">Écart de Caisse</div>
+              <div class="text-sm font-black" id="z-montant-ecart">Saisissez les espèces comptées</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Caissier & Observation -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Caissier / Responsable :</label>
+            <input type="text" id="z-input-caissier" placeholder="Nom du caissier ou gérant" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Observations / Justifications :</label>
+            <input type="text" id="z-input-observations" placeholder="Ex: Rendu de monnaie manquant..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions de Clôture -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="partagerRapportZWhatsApp()" class="px-3.5 py-2 bg-[#25D366] hover:bg-[#128C7E] active:scale-95 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <span>💬</span> <span>Envoyer au Patron par WhatsApp</span>
+          </button>
+          <button type="button" onclick="imprimerRapportZ()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+            <span>🖨️</span> <span>Imprimer Ticket Z</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="fermerModalClotureZ()" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold">
+            Annuler
+          </button>
+          <button type="button" onclick="enregistrerClotureZ()" class="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 active:scale-95 text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5 transition">
+            <span>🔒</span> <span>Valider la Clôture Définitive</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : GESTION DES DÉPENSES & PETITE CAISSE -->
+  <!-- ========================================== -->
+  <div id="modal-depenses" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-4 sm:p-5 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto">
+      
+      <!-- En-tête -->
+      <div class="flex justify-between items-center border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl p-2 bg-rose-50 border border-rose-200 rounded-xl">💸</span>
+          <div>
+            <h3 class="font-black text-slate-800 text-sm sm:text-base">Dépenses & Petite Caisse</h3>
+            <p class="text-[11px] text-slate-500">Sorties de caisse, frais de fonctionnement & charges de boutique</p>
+          </div>
+        </div>
+        <button onclick="fermerModalDepenses()" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
+      </div>
+
+      <!-- Formulaire d'Ajout d'une Dépense -->
+      <form id="form-nouvelle-depense" onsubmit="soumettreNouvelleDepense(event)" class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+        <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+          <span>➕</span> Enregistrer une Sortie de Caisse
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">Motif / Description de la dépense * :</label>
+            <input type="text" id="depense-motif" required placeholder="Ex: Taxi transport sachets, Facture Cash Power, Repas midi..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-rose-500">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Montant en FCFA * :</label>
+            <input type="number" id="depense-montant" required min="1" step="1" placeholder="Ex: 2500" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold font-mono focus:ring-2 focus:ring-rose-500">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Catégorie :</label>
+            <select id="depense-categorie" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 text-xs bg-white focus:ring-2 focus:ring-rose-500">
+              <option value="Transport & Logistique">🚖 Transport & Logistique</option>
+              <option value="Énergie & Factures">💡 Énergie & Factures (Cash Power, Eau)</option>
+              <option value="Fournitures & Emballages">📦 Fournitures & Emballages</option>
+              <option value="Personnel & Repas">🍲 Personnel, Repas & Eau</option>
+              <option value="Loyer & Boutique">🏠 Loyer & Entretien Boutique</option>
+              <option value="Autre">📝 Autre / Divers</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Mode de Paiement :</label>
+            <select id="depense-mode" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 text-xs bg-white focus:ring-2 focus:ring-rose-500">
+              <option value="ESPECES">💵 Espèces (Tiroir Caisse)</option>
+              <option value="TMONEY">📱 T-Money</option>
+              <option value="FLOOZ">📱 Flooz</option>
+              <option value="VIREMENT">🏦 Virement Bancaire</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Bénéficiaire / Remarque :</label>
+            <input type="text" id="depense-beneficiaire" placeholder="Ex: Conducteur taxi, CEET..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-rose-500">
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow flex items-center gap-1.5 transition">
+            <span>💸</span> <span>Décaisser & Enregistrer</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Historique des Dépenses Récentes -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+            <span>📋</span> Dépenses Enregistrées Aujourd'hui
+          </span>
+          <span class="text-xs font-black text-rose-700 font-mono" id="depenses-total-badge">0 FCFA</span>
+        </div>
+
+        <div class="max-h-56 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100" id="depenses-liste-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t">
+        <button type="button" onclick="fermerModalDepenses()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold">
+          Fermer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL : DÉVERROUILLAGE MODE GÉRANT (PIN)   -->
+  <!-- ========================================== -->
+  <div id="modal-pin-manager" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-[100000] p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl space-y-4 text-center">
+      <div class="text-3xl p-3 bg-slate-100 rounded-full w-14 h-14 mx-auto flex items-center justify-center">🔑</div>
+      <div>
+        <h3 class="font-black text-slate-900 text-sm">Passer en Mode Gérant</h3>
+        <p class="text-xs text-slate-500 mt-1">Saisissez votre code PIN pour déverrouiller la visibilité des marges et des coûts.</p>
+      </div>
+
+      <div class="space-y-2">
+        <input type="password" id="input-pin-switch-gerant" maxlength="8" placeholder="Code PIN (1234)" class="w-full text-center text-lg font-mono font-bold py-2 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-sky-500">
+        <p id="pin-switch-error" class="text-xs text-rose-600 font-bold min-h-[1.25rem]"></p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onclick="fermerModalPinManager()" class="py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs">
+          Annuler
+        </button>
+        <button type="button" onclick="validerPinManager()" class="py-2 bg-sky-700 hover:bg-sky-800 text-white font-black rounded-xl text-xs shadow">
+          Déverrouiller
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Application Logic -->
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=3.2_20261017"></script>
 </body>
 </html>
