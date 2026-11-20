@@ -11,17 +11,67 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public')) ? path.join(__d
 let activeTunnel = null;
 let tunnelUrl = null;
 
+function getActiveTunnelUrl() {
+  try {
+    const cLogPath = path.join(__dirname, 'cloudflared.log');
+    if (fs.existsSync(cLogPath)) {
+      const cLog = fs.readFileSync(cLogPath, 'utf8');
+      const matches = [...cLog.matchAll(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/g)];
+      if (matches.length > 0) {
+        return matches[matches.length - 1][0];
+      }
+    }
+  } catch (e) {}
+  return tunnelUrl;
+}
+
+function ensureCloudflareTunnel() {
+  const cfCandidates = [
+    "C:\\Program Files (x86)\\cloudflared\\cloudflared.exe",
+    "C:\\Program Files\\cloudflared\\cloudflared.exe"
+  ];
+  const cfPath = cfCandidates.find(p => fs.existsSync(p));
+  if (!cfPath) return;
+
+  const { exec, spawn } = require('child_process');
+  exec('tasklist /FI "IMAGENAME eq cloudflared.exe" /NH', (err, stdout) => {
+    if (stdout && stdout.toLowerCase().includes('cloudflared.exe')) {
+      return;
+    }
+    
+    console.log("🚀 Lancement automatique et surveillance de Cloudflare Tunnel...");
+    try {
+      const tunnelProc = spawn(cfPath, ['tunnel', '--url', `http://127.0.0.1:${PORT}`]);
+      
+      const handleOutput = (data) => {
+        const text = data.toString();
+        const match = text.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/);
+        if (match) {
+          tunnelUrl = match[0];
+          console.log("🌐 LIEN PUBLIC CLOUDFLARE ACTIF :", tunnelUrl);
+          try {
+            fs.writeFileSync(path.join(__dirname, 'cloudflared.log'), tunnelUrl, 'utf8');
+          } catch (e) {}
+        }
+      };
+      tunnelProc.stdout.on('data', handleOutput);
+      tunnelProc.stderr.on('data', handleOutput);
+      tunnelProc.on('exit', () => {
+        setTimeout(ensureCloudflareTunnel, 5000);
+      });
+    } catch (errSpawn) {
+      console.error("Erreur auto-start cloudflared:", errSpawn);
+    }
+  });
+}
+
 // Détection automatique d'un tunnel Cloudflare déjà actif
 try {
-  const cLogPath = path.join(__dirname, 'cloudflared.log');
-  if (fs.existsSync(cLogPath)) {
-    const cLog = fs.readFileSync(cLogPath, 'utf8');
-    const matches = [...cLog.matchAll(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/g)];
-    if (matches.length > 0) {
-      tunnelUrl = matches[matches.length - 1][0];
-      console.log("🌐 Tunnel Cloudflare actif détecté :", tunnelUrl);
-    }
+  tunnelUrl = getActiveTunnelUrl();
+  if (tunnelUrl) {
+    console.log("🌐 Tunnel Cloudflare actif détecté :", tunnelUrl);
   }
+  ensureCloudflareTunnel();
 } catch (e) {}
 
 // Ensure db.json exists
@@ -1118,12 +1168,21 @@ const server = http.createServer(async (req, res) => {
       } else if (item.modeVente === 'DETAIL') {
         unitesVendues = parseInt(item.unitesVendues) || parseInt(item.quantite) || 1;
         fractionAdaka = Math.round((unitesVendues / unitesParAdaka) * 1000) / 1000;
-        prixVenteTotalLigne = Math.round(((parseFloat(item.prix) || prod.prix_detail_unite || 0) * unitesVendues) * 100) / 100;
+        // Si un prix total libre a été saisi par la vendeuse, on le respecte directement
+        if (item.total !== undefined && !isNaN(item.total) && parseFloat(item.total) > 0) {
+          prixVenteTotalLigne = parseFloat(item.total);
+        } else {
+          prixVenteTotalLigne = Math.round(((parseFloat(item.prix) || prod.prix_detail_unite || 0) * unitesVendues) * 100) / 100;
+        }
       } else {
         // Mode GROS (Adaka entier ou multiple)
         fractionAdaka = parseFloat(item.quantite) || 1;
         unitesVendues = Math.round(fractionAdaka * unitesParAdaka);
-        prixVenteTotalLigne = Math.round(((parseFloat(item.prix) || prod.prix_gros || prod.prix || 0) * fractionAdaka) * 100) / 100;
+        if (item.total !== undefined && !isNaN(item.total) && parseFloat(item.total) > 0) {
+          prixVenteTotalLigne = parseFloat(item.total);
+        } else {
+          prixVenteTotalLigne = Math.round(((parseFloat(item.prix) || prod.prix_gros || prod.prix || 0) * fractionAdaka) * 100) / 100;
+        }
       }
 
       const updatedStockAdaka = Math.max(0, Math.round((currentStockAdaka - fractionAdaka) * 1000) / 1000);
@@ -1794,7 +1853,7 @@ const server = http.createServer(async (req, res) => {
       localUrl: `http://${localIp}:${PORT}`,
       tailscaleIp: tailscaleIp,
       tailscaleUrl: tailscaleIp ? `http://${tailscaleIp}:${PORT}` : null,
-      tunnelUrl: tunnelUrl
+      tunnelUrl: getActiveTunnelUrl()
     });
   }
 

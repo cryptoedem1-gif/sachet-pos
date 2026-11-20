@@ -12,7 +12,7 @@ let state = {
   reglementsDettes: [],
   depenses: [],
   clotures: [],
-  modeVendeur: localStorage.getItem('miakiara_mode_vendeur') === 'true',
+  modeVendeur: localStorage.getItem('miakiara_mode_vendeur') === null ? true : (localStorage.getItem('miakiara_mode_vendeur') === 'true'),
   clotureApercu: null,
   activeDebtTab: 'CLIENT', // 'CLIENT' | 'FOURNISSEUR' | 'REGLEMENTS' | 'CLIENTS_LIST'
   currentFicheDetteId: null,
@@ -23,13 +23,38 @@ let state = {
     devise: "FCFA",
     receipt_footer: "MIAKIARA vous remercie de votre fidélité !"
   },
-  cart: [],
+  multiCarts: [
+    { id: 1, name: "Client 1", items: [], discount: 0, customerId: 1 },
+    { id: 2, name: "Client 2", items: [], discount: 0, customerId: 1 },
+    { id: 3, name: "Client 3", items: [], discount: 0, customerId: 1 }
+  ],
+  activeCartIndex: 0,
   activeCategory: 'ALL',
-  posSaleMode: 'GROS', // 'GROS' ou 'DETAIL'
+  posSaleMode: 'DETAIL', // 'DETAIL' (par sachet individuel) par défaut pour Madame !
   paymentMode: 'ESPECES',
   currentTab: 'pos',
   soundEnabled: true
 };
+
+// Accès transparent à state.cart qui pointe toujours sur le client actif (Multi-paniers)
+Object.defineProperty(state, 'cart', {
+  get() {
+    if (!state.multiCarts || !state.multiCarts[state.activeCartIndex]) return [];
+    return state.multiCarts[state.activeCartIndex].items;
+  },
+  set(newItems) {
+    if (!state.multiCarts) {
+      state.multiCarts = [
+        { id: 1, name: "Client 1", items: [], discount: 0, customerId: 1 },
+        { id: 2, name: "Client 2", items: [], discount: 0, customerId: 1 },
+        { id: 3, name: "Client 3", items: [], discount: 0, customerId: 1 }
+      ];
+    }
+    if (state.multiCarts[state.activeCartIndex]) {
+      state.multiCarts[state.activeCartIndex].items = Array.isArray(newItems) ? newItems : [];
+    }
+  }
+});
 
 // --- SYSTÈME DE NOTIFICATIONS TOAST MODERNES ---
 function showToast(type, title, message) {
@@ -250,6 +275,7 @@ async function loadData() {
     appliquerModeVendeurUI();
     populateCustomerDropdown();
     populateApproDropdowns();
+    renderMultiClientTabs();
     renderPosCatalog();
     renderFlashFavorites();
     renderStockTable();
@@ -407,6 +433,7 @@ function onProductCardClick(productId) {
   } else {
     addToCart(productId, 1, 'GROS');
   }
+  renderMultiClientTabs();
 }
 
 function renderPosCatalog() {
@@ -435,7 +462,7 @@ function renderPosCatalog() {
     return;
   }
 
-  const currentMode = state.posSaleMode || 'GROS';
+  const currentMode = state.posSaleMode || 'DETAIL';
 
   grid.innerHTML = filtered.map(p => {
     const unitesParAdaka = p.unites_par_adaka || 20;
@@ -455,67 +482,36 @@ function renderPosCatalog() {
     const prixDetail = parseFloat(p.prix_detail) || parseFloat(p.prix) || 0;
     const prixSachet = parseFloat(p.prix_detail_unite) || (unitesParAdaka > 0 ? Math.round(prixDetail / unitesParAdaka) : 100);
 
-    let activePriceDisplay = '';
-    if (currentMode === 'GROS') {
-      activePriceDisplay = `<span class="text-[10px] text-slate-400">Tarif GROS :</span> <span class="text-xs font-black text-sky-800">${formatMoney(prixGros)} / Adaka</span>`;
-    } else if (currentMode === 'DETAIL') {
-      activePriceDisplay = `<span class="text-[10px] text-slate-400">Tarif DÉTAIL :</span> <span class="text-xs font-black text-amber-700">${formatMoney(prixSachet)} / sachet</span>`;
-    } else {
-      activePriceDisplay = `<span class="text-[10px] text-emerald-600 font-bold">Mode MONTANT :</span> <span class="text-xs font-black text-emerald-800">Au choix du client</span>`;
-    }
-
     return `
-      <div class="product-card bg-white border border-slate-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm hover:border-sky-500 cursor-pointer relative overflow-hidden transition ${isOutOfStock ? 'opacity-70 bg-slate-50' : ''}" onclick="onProductCardClick(${p.id})">
-        <div class="space-y-1">
-          <div class="flex justify-between items-start">
+      <div class="product-card bg-white border-2 ${isOutOfStock ? 'border-slate-200 bg-slate-50 opacity-75' : 'border-slate-200 hover:border-amber-500 active:scale-[0.98]'} rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:shadow-md cursor-pointer transition select-none" onclick="onProductCardClick(${p.id})">
+        <div>
+          <div class="flex justify-between items-center mb-1">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">${p.code || 'SCH'}</span>
             ${stockBadge}
           </div>
           
-          <h3 class="font-bold text-slate-800 text-xs line-clamp-1 leading-snug">
+          <h3 class="font-black text-slate-900 text-sm leading-snug line-clamp-2">
             ${p.nom}
           </h3>
 
-          <div class="flex flex-wrap gap-1 text-[10px] text-slate-600">
-            <span class="bg-slate-100 px-1.5 py-0.5 rounded font-medium">${p.taille || ''}</span>
-            <span class="bg-slate-100 px-1.5 py-0.5 rounded font-medium">${p.couleur || ''}</span>
-            <span class="bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded font-semibold">${p.marque || ''}</span>
-          </div>
-
-          <!-- Affichage clair des 3 tarifs : Gros, Détail Adaka et Sachet individuel -->
-          <div class="grid grid-cols-3 gap-1 pt-1 text-[10px] bg-slate-50 p-1.5 rounded-lg border border-slate-100 text-center">
-            <div class="${currentMode === 'GROS' ? 'font-black text-sky-800 bg-white shadow-xs rounded px-1' : 'text-slate-500'}">
-              <span class="text-[9px] uppercase font-bold block ${currentMode === 'GROS' ? 'text-sky-600' : 'text-slate-400'}">Gros Ad.</span>
-              ${formatMoney(prixGros)}
-            </div>
-            <div class="${currentMode === 'DETAIL' ? 'font-black text-amber-700 bg-white shadow-xs rounded px-1' : 'text-slate-500'}">
-              <span class="text-[9px] uppercase font-bold block ${currentMode === 'DETAIL' ? 'text-amber-600' : 'text-slate-400'}">Dét. Ad.</span>
-              ${formatMoney(prixDetail)}
-            </div>
-            <div class="font-black text-emerald-800 bg-emerald-50/70 border border-emerald-200/50 rounded px-1">
-              <span class="text-[9px] uppercase font-bold block text-emerald-700">1 Sachet</span>
-              ${formatMoney(prixSachet)}
-            </div>
+          <div class="flex flex-wrap gap-1 mt-1 text-[11px] text-slate-600">
+            ${p.taille ? `<span class="bg-slate-100 px-1.5 py-0.5 rounded font-semibold">${p.taille}</span>` : ''}
+            ${p.couleur ? `<span class="bg-slate-100 px-1.5 py-0.5 rounded font-semibold">${p.couleur}</span>` : ''}
+            ${p.marque ? `<span class="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-bold">${p.marque}</span>` : ''}
           </div>
         </div>
 
-        <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5">
+        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
           <div>
-            ${activePriceDisplay}
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">${currentMode === 'DETAIL' ? 'Prix au Sachet' : (currentMode === 'GROS' ? 'Tarif Adaka (Gros)' : 'Prix')}</div>
+            <div class="text-base font-black ${currentMode === 'DETAIL' ? 'text-amber-700' : 'text-sky-800'}">
+              ${currentMode === 'DETAIL' ? formatMoney(prixSachet) : formatMoney(prixGros)}
+            </div>
           </div>
           
-          <!-- Boutons rapides 3 modes : +1 Adaka, +1 Sachet, 💵 Montant -->
-          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-            <button type="button" onclick="addToCart(${p.id}, 1, 'GROS')" class="px-2 py-1 bg-sky-700 hover:bg-sky-800 text-white rounded text-[10px] font-bold shadow-xs transition active:scale-95" title="Ajouter 1 Adaka entier au tarif de gros">
-              +1 Ad.
-            </button>
-            <button type="button" onclick="addUnitToCart(${p.id}, 1)" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold shadow-xs transition active:scale-95" title="Ajouter 1 Sachet individuel au détail">
-              +1 Sachet
-            </button>
-            <button type="button" onclick="openModalVenteMontant(${p.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-black shadow-xs flex items-center gap-0.5 transition active:scale-95" title="Vente au détail par montant encaissé (200F, 400F, 600F...)">
-              <span>💵</span> Montant
-            </button>
-          </div>
+          <button type="button" class="w-10 h-10 rounded-xl ${currentMode === 'DETAIL' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-sky-700 hover:bg-sky-800 text-white'} flex items-center justify-center font-black text-xl shadow-sm transition active:scale-90" title="Ajouter au panier">
+            ＋
+          </button>
         </div>
       </div>
     `;
@@ -859,26 +855,158 @@ async function encaisserDirectVenteMontant() {
   }
 }
 
+function renderMultiClientTabs() {
+  const container = document.getElementById('multi-client-tabs-container') || document.getElementById('multi-client-bar');
+  if (!container) return;
+
+  if (!state.multiCarts || state.multiCarts.length === 0) {
+    state.multiCarts = [
+      { id: 1, name: "Client 1", items: [], discount: 0, customerId: 1 },
+      { id: 2, name: "Client 2", items: [], discount: 0, customerId: 1 },
+      { id: 3, name: "Client 3", items: [], discount: 0, customerId: 1 }
+    ];
+    state.activeCartIndex = 0;
+  }
+
+  container.innerHTML = state.multiCarts.map((cart, idx) => {
+    const isActive = idx === state.activeCartIndex;
+    const itemCount = cart.items ? cart.items.length : 0;
+    const total = (cart.items || []).reduce((s, it) => s + (it.total !== undefined ? it.total : (it.modeVente === 'DETAIL_MONTANT' ? it.prix : (it.quantite * it.prix))), 0);
+    return `
+      <button type="button" onclick="switchActiveClientCart(${idx})" class="client-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition whitespace-nowrap ${isActive ? 'bg-amber-400 text-slate-950 shadow-md ring-2 ring-white/50 scale-105' : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'}">
+        <span>👤 ${cart.name}</span>
+        ${itemCount > 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] font-black ${isActive ? 'bg-slate-900 text-amber-300' : 'bg-sky-500 text-white'}">${itemCount} (${formatMoney(total)})</span>` : ''}
+      </button>
+    `;
+  }).join('');
+}
+
+function switchActiveClientCart(index) {
+  if (index < 0 || index >= state.multiCarts.length) return;
+  state.activeCartIndex = index;
+  renderMultiClientTabs();
+  renderCart();
+  playBeep('beep');
+}
+
+function ajouterNouveauPanierClient() {
+  const nextNum = state.multiCarts.length + 1;
+  state.multiCarts.push({
+    id: Date.now(),
+    name: `Client ${nextNum}`,
+    items: [],
+    discount: 0,
+    customerId: 1
+  });
+  state.activeCartIndex = state.multiCarts.length - 1;
+  renderMultiClientTabs();
+  renderCart();
+  playBeep('beep');
+  showToast('info', 'Nouveau panier', `Panier Client ${nextNum} activé.`);
+}
+
+function incrementCartItem(index) {
+  if (!state.cart[index]) return;
+  const item = state.cart[index];
+  const step = item.modeVente === 'DETAIL' ? 1 : 1;
+  item.quantite = Math.round((item.quantite + step) * 1000) / 1000;
+  item.unitesVendues = Math.round(item.quantite);
+  item.total = Math.round(item.quantite * item.prix);
+  playBeep('beep');
+  renderCart();
+  renderMultiClientTabs();
+}
+
+function decrementCartItem(index) {
+  if (!state.cart[index]) return;
+  const item = state.cart[index];
+  const step = item.modeVente === 'DETAIL' ? 1 : 1;
+  const newQty = item.quantite - step;
+  if (newQty <= 0) {
+    state.cart.splice(index, 1);
+  } else {
+    item.quantite = Math.round(newQty * 1000) / 1000;
+    item.unitesVendues = Math.round(item.quantite);
+    item.total = Math.round(item.quantite * item.prix);
+  }
+  playBeep('beep');
+  renderCart();
+  renderMultiClientTabs();
+}
+
+function onCartLineTotalInput(index, val) {
+  const item = state.cart[index];
+  if (!item) return;
+  const total = parseFloat(val);
+  if (isNaN(total) || total < 0) return;
+
+  item.total = total;
+  if (item.quantite > 0) {
+    item.prix = Math.round((total / item.quantite) * 100) / 100;
+  }
+
+  const puElem = document.getElementById(`cart-item-pu-${index}`);
+  if (puElem) {
+    puElem.textContent = `(${formatMoney(item.prix)} / ${item.lot || 'u'})`;
+  }
+
+  updateCartTotals();
+}
+
+function onCartLineTotalBlur(index) {
+  renderMultiClientTabs();
+}
+
+function onCartLineQtyInput(index, val) {
+  const item = state.cart[index];
+  if (!item) return;
+  const q = parseFloat(val);
+  if (isNaN(q) || q <= 0) return;
+
+  item.quantite = q;
+  item.unitesVendues = Math.round(q);
+  item.total = Math.round(q * item.prix);
+
+  const totalInput = document.getElementById(`cart-item-total-${index}`);
+  if (totalInput) {
+    totalInput.value = item.total;
+  }
+
+  updateCartTotals();
+}
+
+function updateCartLineTotalPrice(index, newTotal) {
+  onCartLineTotalInput(index, newTotal);
+  renderMultiClientTabs();
+}
+
 function updateCartItemQty(index, newQty) {
   const val = parseFloat(newQty);
   if (val <= 0) {
     state.cart.splice(index, 1);
   } else {
     state.cart[index].quantite = Math.round(val * 1000) / 1000;
+    state.cart[index].unitesVendues = Math.round(state.cart[index].quantite);
+    state.cart[index].total = Math.round(state.cart[index].quantite * state.cart[index].prix);
   }
   renderCart();
+  renderMultiClientTabs();
 }
 
 function setCartItemFraction(index, fraction) {
   if (state.cart[index]) {
     state.cart[index].quantite = fraction;
+    state.cart[index].unitesVendues = Math.round(fraction * (state.cart[index].unitesParAdaka || 20));
+    state.cart[index].total = Math.round(fraction * state.cart[index].prix);
     renderCart();
+    renderMultiClientTabs();
   }
 }
 
 function removeFromCart(index) {
   state.cart.splice(index, 1);
   renderCart();
+  renderMultiClientTabs();
 }
 
 function clearCart() {
@@ -886,6 +1014,7 @@ function clearCart() {
   const discountInput = document.getElementById('cart-discount');
   if (discountInput) discountInput.value = 0;
   renderCart();
+  renderMultiClientTabs();
 }
 
 function renderCart() {
@@ -908,7 +1037,7 @@ function renderCart() {
         <div class="flex flex-col items-center justify-center h-48 text-slate-400 text-xs">
           <span class="text-3xl mb-1">🛍️</span>
           <span>Le panier est vide</span>
-          <span class="text-slate-400">Cliquez sur un sachet pour l'ajouter</span>
+          <span class="text-slate-400">Touchez un sachet pour l'ajouter</span>
         </div>`;
     }
     if (btnCheckout) btnCheckout.disabled = true;
@@ -926,57 +1055,53 @@ function renderCart() {
     container.innerHTML = state.cart.map((item, index) => {
       const isMontant = item.modeVente === 'DETAIL_MONTANT';
       const isDetail = item.modeVente === 'DETAIL';
-      const totalLine = isMontant ? item.prix : (item.quantite * item.prix);
+      const totalLine = (item.total !== undefined && item.total !== null)
+        ? parseFloat(item.total)
+        : (isMontant ? item.prix : (item.quantite * item.prix));
       const coutLine = (item.coutAchat || 0) * (isMontant ? 1 : item.quantite);
       const margeLine = totalLine - coutLine;
 
       let badgeMode = '';
       if (isMontant) {
-        badgeMode = `<span class="ml-1 text-[9px] px-1.5 py-0.5 rounded font-black bg-emerald-100 text-emerald-800">💵 PAR MONTANT (${item.unitesVendues || 1} u)</span>`;
+        badgeMode = `<span class="ml-1 text-[9px] px-2 py-0.5 rounded-full font-black bg-emerald-100 text-emerald-800">💵 MONTANT</span>`;
       } else if (isDetail) {
-        badgeMode = `<span class="ml-1 text-[9px] px-1.5 py-0.5 rounded font-black bg-amber-100 text-amber-800">DÉTAIL (${item.unitesVendues || item.quantite} u)</span>`;
+        badgeMode = `<span class="ml-1 text-[9px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">🛍️ Sachet</span>`;
       } else {
-        badgeMode = `<span class="ml-1 text-[9px] px-1.5 py-0.5 rounded font-black bg-sky-100 text-sky-800">GROS</span>`;
+        badgeMode = `<span class="ml-1 text-[9px] px-2 py-0.5 rounded-full font-bold bg-sky-100 text-sky-800">📦 Gros (Adaka)</span>`;
       }
 
       return `
-        <div class="cart-item py-2 px-1 flex flex-col gap-1 border-b border-slate-100">
+        <div class="cart-item py-2.5 px-2.5 rounded-xl bg-white border border-slate-200 mb-2 flex flex-col gap-1.5 shadow-xs">
           <div class="flex justify-between items-start">
-            <div class="font-bold text-slate-800 text-xs leading-tight">
+            <div class="font-black text-slate-800 text-xs leading-tight">
               ${item.nom}
               ${badgeMode}
             </div>
-            <button onclick="removeFromCart(${index})" class="text-slate-300 hover:text-rose-500 font-bold text-xs ml-2">✕</button>
+            <button onclick="removeFromCart(${index})" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg p-1 text-xs" title="Supprimer cet article">✕</button>
           </div>
 
-          <div class="flex items-center justify-between text-xs mt-1">
+          <div class="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
+            <!-- Stepper Quantité -->
             <div class="flex items-center gap-1">
               ${!isMontant ? `
-                <button onclick="setCartItemFraction(${index}, 0.25)" class="px-1 py-0.5 rounded text-[10px] ${item.quantite === 0.25 ? 'bg-sky-700 text-white font-bold' : 'bg-slate-100 text-slate-600'}">¼</button>
-                <button onclick="setCartItemFraction(${index}, 0.5)" class="px-1 py-0.5 rounded text-[10px] ${item.quantite === 0.5 ? 'bg-sky-700 text-white font-bold' : 'bg-slate-100 text-slate-600'}">½</button>
-                <button onclick="setCartItemFraction(${index}, 1)" class="px-1 py-0.5 rounded text-[10px] ${item.quantite === 1 ? 'bg-sky-700 text-white font-bold' : 'bg-slate-100 text-slate-600'}">1</button>
-                <input type="number" step="${isDetail ? '1' : '0.25'}" min="0.01" value="${item.quantite}" onchange="updateCartItemQty(${index}, this.value)" class="w-14 text-center font-bold border border-slate-300 rounded p-0.5 text-xs">
-                <span class="text-[10px] text-slate-400 font-medium">${item.lot || 'Adaka'}</span>
+                <button type="button" onclick="decrementCartItem(${index})" class="btn-stepper w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 shadow-xs hover:bg-slate-200">－</button>
+                <input type="number" step="${isDetail ? '1' : '0.25'}" min="0.01" value="${item.quantite}" oninput="onCartLineQtyInput(${index}, this.value)" class="w-14 h-8 text-center font-black border border-slate-300 rounded-lg text-xs bg-white">
+                <button type="button" onclick="incrementCartItem(${index})" class="btn-stepper w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-base flex items-center justify-center active:scale-95 shadow-xs hover:bg-amber-600">＋</button>
+                <span class="text-[10px] text-slate-400 font-semibold ml-0.5">${item.lot || (isDetail ? 'sachets' : 'Adaka')}</span>
               ` : `
                 <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ${item.unitesVendues || 1} sachets (${item.fractionAdaka || 0} Adaka)
+                  ${item.quantite || 1} sachets
                 </span>
               `}
             </div>
 
-            <div class="text-right flex flex-col items-end gap-1">
-              <div class="text-xs font-black text-slate-800">${formatMoney(totalLine)}</div>
-              ${!isMontant ? `
-                <div class="flex items-center gap-1">
-                  <span class="text-[10px] text-slate-400 font-semibold">P.U :</span>
-                  <input type="number" min="0" step="5" value="${item.prix}" onchange="updateCartItemPrice(${index}, this.value)" class="w-20 text-right font-black border border-slate-300 rounded px-1 py-0.5 text-xs text-sky-900 bg-sky-50 focus:bg-white focus:ring-1 focus:ring-sky-500" title="Prix modifiable">
-                  <button onclick="saveCartPriceToCatalog(${index})" class="text-[10px] text-slate-500 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded px-1 py-0.5 font-bold transition" title="Enregistrer ce prix comme nouveau prix officiel">
-                    💾
-                  </button>
-                </div>
-              ` : `
-                <span class="text-[10px] text-emerald-600 font-semibold">Marge : +${formatMoney(margeLine)}</span>
-              `}
+            <!-- Prix Total Ligne & Négociation Prix Libre -->
+            <div class="text-right flex flex-col items-end">
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">Total :</span>
+                <input type="number" step="5" min="0" id="cart-item-total-${index}" value="${Math.round(totalLine)}" oninput="onCartLineTotalInput(${index}, this.value)" onblur="onCartLineTotalBlur(${index})" class="w-20 text-right font-black border-2 border-amber-300 bg-amber-50 rounded px-1.5 py-0.5 text-xs text-amber-900 focus:bg-white focus:ring-2 focus:ring-amber-500" title="Prix négocié : modifiez le montant total directement ici">
+              </div>
+              <span id="cart-item-pu-${index}" class="text-[9px] text-slate-400 font-medium mt-0.5">(${formatMoney(item.prix)} / ${item.lot || 'u'})</span>
             </div>
           </div>
         </div>
@@ -991,7 +1116,9 @@ function updateCartItemPrice(index, newPrice) {
   const p = parseFloat(newPrice);
   if (!isNaN(p) && p >= 0) {
     state.cart[index].prix = p;
+    delete state.cart[index].total;
     renderCart();
+    renderMultiClientTabs();
   }
 }
 
@@ -1029,7 +1156,12 @@ async function saveCartPriceToCatalog(index) {
 }
 
 function getCartSubtotal() {
-  return state.cart.reduce((sum, item) => sum + (item.modeVente === 'DETAIL_MONTANT' ? item.prix : (item.quantite * item.prix)), 0);
+  return state.cart.reduce((sum, item) => {
+    if (item.total !== undefined && item.total !== null) {
+      return sum + parseFloat(item.total);
+    }
+    return sum + (item.modeVente === 'DETAIL_MONTANT' ? item.prix : (item.quantite * item.prix));
+  }, 0);
 }
 
 function updateCartTotals() {
@@ -1266,6 +1398,13 @@ async function confirmSale(doPrint = true) {
     }
 
     clearCart();
+    // Si un autre client est en attente avec des articles dans son panier, basculer dessus automatiquement
+    const nextPendingIndex = state.multiCarts.findIndex((c, i) => i !== state.activeCartIndex && c.items && c.items.length > 0);
+    if (nextPendingIndex !== -1) {
+      state.activeCartIndex = nextPendingIndex;
+      showToast('info', 'Client en attente', `Reprise du panier ${state.multiCarts[nextPendingIndex].name}`);
+    }
+    renderMultiClientTabs();
     await loadData();
     // Proposer immédiatement le partage WhatsApp / SMS
     openShareSaleReceipt(data.sale);
@@ -1287,12 +1426,16 @@ function printThermalReceipt(sale) {
   const now = new Date(sale.date || Date.now());
   const dateFormatted = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR');
 
-  const itemsHtml = (sale.items || []).map(item => `
+  const itemsHtml = (sale.items || []).map(item => {
+    const isMontant = item.modeVente === 'DETAIL_MONTANT';
+    const lineTotal = (item.total !== undefined && item.total !== null) ? item.total : (isMontant ? item.prix : (item.quantite * item.prix));
+    return `
     <tr>
       <td style="padding: 2px 0;">${item.nom}<br><small>${item.quantite} x ${formatMoney(item.prix)}</small></td>
-      <td style="text-align: right; vertical-align: top; font-weight: bold;">${formatMoney(item.quantite * item.prix)}</td>
+      <td style="text-align: right; vertical-align: top; font-weight: bold;">${formatMoney(lineTotal)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   printArea.innerHTML = `
     <div style="text-align: center; margin-bottom: 8px;">

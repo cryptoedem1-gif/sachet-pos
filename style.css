@@ -141,3 +141,36 @@ body.mode-vendeur-actif .flouter-mode-vendeur {
   user-select: none !important;
   pointer-events: none !important;
 }
+
+/* Onglets Multi-Clients (Mise en attente) */
+.client-tab-btn {
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+  min-height: 40px;
+}
+.client-tab-btn.active {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+  border-color: #38bdf8 !important;
+}
+
+/* Tuile Sachet Express Tactile */
+.sachet-tile {
+  min-height: 96px;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.sachet-tile:active {
+  transform: scale(0.96);
+  background-color: #f0fdf4 !important;
+}
+
+/* Bouton Grand Tactile Stepper (+ / -) */
+.btn-stepper {
+  min-width: 38px;
+  min-height: 38px;
+  user-select: none;
+  touch-action: manipulation;
+}
+

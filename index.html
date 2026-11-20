@@ -129,28 +129,28 @@
 
       <!-- Quick Actions (Mobile Access, Expenses, Closure Z, Mode Vendeur, Backup, Audio) -->
       <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs order-2 sm:order-3">
-        <!-- Bouton Dépenses Express -->
-        <button onclick="ouvrirModalDepenses()" class="px-2 sm:px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Enregistrer une dépense ou sortie de caisse">
+        <!-- Bascule Mode Vendeuse (Simple) / Mode Gérant -->
+        <button onclick="basculerModeVendeur()" id="btn-mode-vendeur" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-400 rounded-lg font-black flex items-center gap-1 shadow transition text-xs" title="Basculer entre Mode Vendeuse Simple et Mode Gérant">
+          <span id="icon-mode-vendeur">⚡</span> <span id="label-mode-vendeur">Vendeuse</span>
+        </button>
+
+        <!-- Bouton Dépenses Express (masqué pour vendeuse) -->
+        <button onclick="ouvrirModalDepenses()" class="masquer-mode-vendeur px-2 sm:px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Enregistrer une dépense ou sortie de caisse">
           <span>💸</span> <span class="hidden md:inline">Dépenses</span>
         </button>
 
-        <!-- Bouton Clôture Journalière Rapport Z -->
-        <button onclick="ouvrirModalClotureZ()" class="px-2 sm:px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Clôture Journalière de Caisse (Rapport Z officiel)">
+        <!-- Bouton Clôture Journalière Rapport Z (masqué pour vendeuse) -->
+        <button onclick="ouvrirModalClotureZ()" class="masquer-mode-vendeur px-2 sm:px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Clôture Journalière de Caisse (Rapport Z officiel)">
           <span>📊</span> <span class="hidden md:inline">Clôture (Z)</span>
         </button>
 
-        <!-- Bascule Mode Vendeur / Mode Gérant -->
-        <button onclick="basculerModeVendeur()" id="btn-mode-vendeur" class="px-2 sm:px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-emerald-300 border border-slate-700 rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Basculer entre Mode Gérant (tout visible) et Mode Vendeur (marges et coûts masqués)">
-          <span id="icon-mode-vendeur">🔑</span> <span id="label-mode-vendeur" class="hidden sm:inline">Gérant</span>
-        </button>
-
         <!-- Bouton Accès Téléphone Mondial -->
-        <button onclick="openModalMobileAccess()" class="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-lg shadow flex items-center gap-1 transition" title="Consulter sur votre smartphone partout dans le monde">
+        <button onclick="openModalMobileAccess()" class="masquer-mode-vendeur px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-lg shadow hidden sm:flex items-center gap-1 transition" title="Consulter sur votre smartphone partout dans le monde">
           <span>📱</span> <span class="hidden sm:inline">Accès</span> Téléphone
         </button>
 
         <!-- Sauvegarde 1-Clic -->
-        <button onclick="downloadBackup()" class="px-2 sm:px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-1 shadow transition text-xs" title="Sauvegarder immédiatement toutes les données (db.json)">
+        <button onclick="downloadBackup()" class="masquer-mode-vendeur px-2 sm:px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold hidden sm:flex items-center gap-1 shadow transition text-xs" title="Sauvegarder immédiatement toutes les données (db.json)">
           <span>💾</span> <span class="hidden md:inline">Sauvegarder</span>
         </button>
 
@@ -170,7 +170,7 @@
         </button>
 
         <!-- Bouton Verrouiller PIN -->
-        <button onclick="verrouillerApplication()" class="px-2 py-1.5 bg-sky-900 hover:bg-sky-700 rounded-lg border border-sky-700 text-amber-300 font-bold flex items-center gap-1 text-xs" title="Verrouiller immédiatement l'écran">
+        <button onclick="verrouillerApplication()" class="masquer-mode-vendeur px-2 py-1.5 bg-sky-900 hover:bg-sky-700 rounded-lg border border-sky-700 text-amber-300 font-bold hidden sm:flex items-center gap-1 text-xs" title="Verrouiller immédiatement l'écran">
           <span>🔒</span> <span class="hidden md:inline">Verrouiller</span>
         </button>
 
@@ -179,7 +179,7 @@
           <div class="text-[10px] text-sky-300">Valeur Stock</div>
           <div class="text-xs font-bold text-amber-300" id="header-stock-value">0 FCFA</div>
         </div>
-        <div class="bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
+        <div class="masquer-mode-vendeur bg-sky-900/80 px-2.5 py-1 rounded-lg border border-sky-700 hidden lg:block">
           <div class="text-[10px] text-sky-300">Ventes Jour</div>
           <div class="text-xs font-bold text-emerald-300" id="header-today-sales">0 FCFA</div>
         </div>
@@ -193,161 +193,182 @@
     <!-- ========================================== -->
     <!-- TAB 1 : CAISSE & POINT DE VENTE (POS)       -->
     <!-- ========================================== -->
-    <div id="view-pos" class="tab-view flex flex-col lg:flex-row h-full">
+    <div id="view-pos" class="tab-view flex flex-col h-full">
       
-      <!-- Mobile Sub-Navigation (Switch between Catalog & Cart on phones) -->
-      <div class="flex lg:hidden bg-slate-200 p-1 rounded-xl m-2 gap-1 text-xs font-bold flex-none shadow-inner">
-        <button type="button" onclick="setMobilePosTab('catalog')" id="mobile-pos-btn-catalog" class="flex-1 py-2 rounded-lg bg-white text-sky-900 shadow transition flex items-center justify-center gap-1.5">
-          <span>🛍️</span> Catalogue Sachets
-        </button>
-        <button type="button" onclick="setMobilePosTab('cart')" id="mobile-pos-btn-cart" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
-          <span>🛒</span> Mon Panier (<span id="mobile-cart-badge">0</span>)
+      <!-- BARRE MULTI-CLIENTS : SERVIR PLUSIEURS CLIENTS EN PARALLÈLE SANS RIEN PERDRE -->
+      <div id="multi-client-bar" class="w-full bg-slate-900 text-white px-2 sm:px-3 py-1.5 flex items-center justify-between gap-1.5 sm:gap-2 shadow-md flex-none border-b border-slate-700 z-10">
+        <div class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar flex-1 py-0.5" id="multi-client-tabs-container">
+          <!-- Populated dynamically: Client 1, Client 2, Client 3 -->
+        </div>
+        <button type="button" onclick="ajouterNouveauPanierClient()" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow flex items-center gap-1 whitespace-nowrap active:scale-95" title="Servir un nouveau client sans perdre la vente en cours">
+          <span>➕</span> <span class="hidden sm:inline">Autre</span> Client
         </button>
       </div>
 
-      <!-- Left: Products Catalog & Filters -->
-      <div id="pos-catalog-panel" class="w-full lg:w-8/12 flex flex-col h-full border-r border-slate-200 bg-slate-50 relative">
+      <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
         
-        <!-- Sélecteur de Mode de Vente : GROS vs DÉTAIL vs VENTE PAR MONTANT -->
-        <div class="px-3 pt-2 bg-white flex-none">
-          <div class="flex flex-wrap items-center justify-between p-1.5 bg-slate-100 rounded-xl border border-slate-200 gap-1.5">
-            <span class="text-[11px] font-bold text-slate-700 pl-1 flex items-center gap-1">
-              <span>🏷️</span> <span class="hidden sm:inline">Mode de Vente :</span>
-            </span>
-            <div class="grid grid-cols-3 gap-1 flex-1 max-w-md w-full sm:w-auto">
-              <button type="button" id="btn-pos-mode-gros" onclick="setPosSaleMode('GROS')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 shadow transition bg-sky-700 text-white" title="Vente par Adaka entier au tarif de gros">
-                <span>📦</span> Gros (Adaka)
-              </button>
-              <button type="button" id="btn-pos-mode-detail" onclick="setPosSaleMode('DETAIL')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition bg-white text-slate-700 border border-slate-300 hover:bg-slate-50" title="Vente au détail par sachets individuels">
-                <span>🛍️</span> Détail (Unités)
-              </button>
-              <button type="button" id="btn-pos-mode-montant" onclick="setPosSaleMode('MONTANT')" class="py-1 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50" title="Vente au détail par montant encaissé (200F, 400F, 600F...)">
-                <span>💵</span> Par Montant
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Search and Quick Category Bar -->
-        <div class="p-3 bg-white border-b border-slate-200 space-y-2 flex-none">
-          <div class="flex gap-2">
-            <div class="relative flex-1">
-              <input type="text" id="pos-search" oninput="renderPosCatalog()" placeholder="Rechercher : Glaçon, Viva, Kavi, 5Frs, Noir, Grand, 100kg..." class="w-full pl-9 pr-9 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-              <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
-              <button onclick="clearSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
-            </div>
-            
-            <!-- Quick Color filter -->
-            <select id="pos-color-filter" onchange="renderPosCatalog()" class="border border-slate-300 rounded-lg text-sm px-3 py-2 bg-white text-slate-700 focus:ring-2 focus:ring-sky-500">
-              <option value="">Toutes les Couleurs</option>
-              <option value="transparent">Transparent</option>
-              <option value="noir">Noir</option>
-              <option value="bleu">Bleu</option>
-              <option value="tout couleur">Tout couleur</option>
-            </select>
-          </div>
-
-          <!-- Category Pills -->
-          <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-pills">
-            <button onclick="setCategoryFilter('ALL')" class="cat-pill active px-3 py-1.5 rounded-full font-medium bg-sky-700 text-white whitespace-nowrap">Tous (55)</button>
-            <button onclick="setCategoryFilter('Glaçon')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Glaçon</button>
-            <button onclick="setCategoryFilter('Jus')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Jus</button>
-            <button onclick="setCategoryFilter('Kavi (1/4)')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Kavi (1/4)</button>
-            <button onclick="setCategoryFilter('Demi (1/2)')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Demi (1/2)</button>
-            <button onclick="setCategoryFilter('Litre')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Litre</button>
-            <button onclick="setCategoryFilter('Foutoufoutou')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Foutou</button>
-            <button onclick="setCategoryFilter('Arachide')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Arachide</button>
-            <button onclick="setCategoryFilter('Yaourt')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Yaourt</button>
-            <button onclick="setCategoryFilter('Sachets Vente Détail')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sachets Détail (5F, 10F, 50F)</button>
-            <button onclick="setCategoryFilter('Sacs Rayés & Bafana')" class="cat-pill px-3 py-1.5 rounded-full font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Sacs Rayés & Bafana</button>
-          </div>
-        </div>
-
-        <!-- Flash / Fast-Selling Favorites Bar -->
-        <div id="pos-flash-favorites-container" class="px-3 py-1.5 bg-amber-50/90 border-b border-amber-200 flex items-center gap-2 overflow-x-auto no-scrollbar flex-none">
-          <span class="text-[11px] font-black text-amber-900 flex items-center gap-1 whitespace-nowrap">
-            <span>⚡</span> Ventes Flash :
-          </span>
-          <div id="pos-flash-favorites-list" class="flex items-center gap-1.5 flex-nowrap">
-            <!-- Dynamically populated by renderFlashFavorites() -->
-          </div>
-        </div>
-
-        <!-- Products Grid Scrollable Area -->
-        <div class="flex-1 overflow-y-auto p-3 pb-16 lg:pb-3">
-          <div id="pos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-            <!-- Dynamically populated by app.js -->
-          </div>
-        </div>
-
-        <!-- Floating mobile cart button when in catalog view -->
-        <div id="mobile-floating-cart-bar" class="lg:hidden absolute bottom-3 left-3 right-3 z-30 hidden">
-          <button type="button" onclick="setMobilePosTab('cart')" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black shadow-2xl flex items-center justify-between border-2 border-white">
-            <span class="flex items-center gap-2">🛒 Voir le Panier (<span id="floating-cart-count">0</span>)</span>
-            <span id="floating-cart-total" class="bg-emerald-800 px-2.5 py-1 rounded-lg text-xs">0 FCFA</span>
+        <!-- Mobile Sub-Navigation (Switch between Catalog & Cart on phones) -->
+        <div class="flex lg:hidden bg-slate-200 p-1 rounded-xl m-2 gap-1 text-xs font-bold flex-none shadow-inner">
+          <button type="button" onclick="setMobilePosTab('catalog')" id="mobile-pos-btn-catalog" class="flex-1 py-2 rounded-lg bg-white text-sky-900 shadow transition flex items-center justify-center gap-1.5">
+            <span>🛍️</span> 1. Choix des Sachets
+          </button>
+          <button type="button" onclick="setMobilePosTab('cart')" id="mobile-pos-btn-cart" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
+            <span>🛒</span> 2. Ticket & Prix (<span id="mobile-cart-badge">0</span>)
           </button>
         </div>
+
+        <!-- Left: Products Catalog & Filters -->
+        <div id="pos-catalog-panel" class="w-full lg:w-7/12 xl:w-8/12 flex flex-col h-full border-r border-slate-200 bg-slate-50 relative">
+          
+          <!-- Sélecteur de Mode de Vente Simplifié : DÉTAIL (par défaut) vs GROS vs MONTANT -->
+          <div class="px-3 pt-2 bg-white flex-none">
+            <div class="flex flex-wrap items-center justify-between p-1.5 bg-slate-100 rounded-xl border border-slate-200 gap-1.5">
+              <span class="text-xs font-bold text-slate-700 pl-1 flex items-center gap-1">
+                <span>🏷️</span> <span>Mode Vente :</span>
+              </span>
+              <div class="grid grid-cols-3 gap-1 flex-1 max-w-md w-full sm:w-auto">
+                <button type="button" id="btn-pos-mode-detail" onclick="setPosSaleMode('DETAIL')" class="py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1 shadow transition bg-amber-600 text-white" title="Vente au détail par sachets individuels (Par défaut)">
+                  <span>🛍️</span> Au Sachet
+                </button>
+                <button type="button" id="btn-pos-mode-gros" onclick="setPosSaleMode('GROS')" class="py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition bg-white text-slate-700 border border-slate-300 hover:bg-slate-50" title="Vente par Adaka entier au tarif de gros">
+                  <span>📦</span> Adaka (Gros)
+                </button>
+                <button type="button" id="btn-pos-mode-montant" onclick="setPosSaleMode('MONTANT')" class="py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50" title="Vente au détail par montant encaissé (200F, 400F, 600F...)">
+                  <span>💵</span> Montant Libre
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search and Quick Category Bar -->
+          <div class="p-2.5 sm:p-3 bg-white border-b border-slate-200 space-y-2 flex-none">
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <input type="text" id="pos-search" oninput="renderPosCatalog()" placeholder="🔍 Tapez un sachet (Glaçon, Viva, Kavi, 5F, Bafana...)" class="w-full pl-9 pr-9 py-2.5 border-2 border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-medium">
+                <span class="absolute left-3 top-3 text-slate-400">🔍</span>
+                <button onclick="clearSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-1 text-sm">✕</button>
+              </div>
+              
+              <!-- Quick Color filter -->
+              <select id="pos-color-filter" onchange="renderPosCatalog()" class="border border-slate-300 rounded-xl text-xs sm:text-sm px-2.5 py-2 bg-white text-slate-700 focus:ring-2 focus:ring-sky-500 hidden sm:block">
+                <option value="">Toutes Couleurs</option>
+                <option value="transparent">Transparent</option>
+                <option value="noir">Noir</option>
+                <option value="bleu">Bleu</option>
+                <option value="tout couleur">Tout couleur</option>
+              </select>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-pills">
+              <button onclick="setCategoryFilter('ALL')" class="cat-pill active px-3 py-1.5 rounded-full font-bold bg-sky-700 text-white whitespace-nowrap">🌟 Tous</button>
+              <button onclick="setCategoryFilter('Glaçon')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">🧊 Glaçons</button>
+              <button onclick="setCategoryFilter('Kavi (1/4)')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">🥤 Kavi (1/4)</button>
+              <button onclick="setCategoryFilter('Demi (1/2)')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">🛍️ Demi (1/2)</button>
+              <button onclick="setCategoryFilter('Sachets Vente Détail')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">🟡 Sachets 5F & 10F</button>
+              <button onclick="setCategoryFilter('Jus')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">🍹 Jus</button>
+              <button onclick="setCategoryFilter('Litre')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Litre</button>
+              <button onclick="setCategoryFilter('Foutoufoutou')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">Foutou</button>
+              <button onclick="setCategoryFilter('Sacs Rayés & Bafana')" class="cat-pill px-3 py-1.5 rounded-full font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 whitespace-nowrap">📦 Sacs Rayés & Bafana</button>
+            </div>
+          </div>
+
+          <!-- Flash / Fast-Selling Favorites Bar -->
+          <div id="pos-flash-favorites-container" class="px-3 py-1.5 bg-amber-50/90 border-b border-amber-200 flex items-center gap-2 overflow-x-auto no-scrollbar flex-none">
+            <span class="text-[11px] font-black text-amber-900 flex items-center gap-1 whitespace-nowrap">
+              <span>⚡</span> Favoris 1-Clic :
+            </span>
+            <div id="pos-flash-favorites-list" class="flex items-center gap-1.5 flex-nowrap">
+              <!-- Dynamically populated by renderFlashFavorites() -->
+            </div>
+          </div>
+
+          <!-- Products Grid Scrollable Area -->
+          <div class="flex-1 overflow-y-auto p-2.5 sm:p-3 pb-24 lg:pb-3">
+            <div id="pos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-2.5">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </div>
+
+          <!-- Floating mobile cart button when in catalog view -->
+          <div id="mobile-floating-cart-bar" class="lg:hidden absolute bottom-2 left-2 right-2 z-30 hidden shadow-2xl">
+            <div class="bg-slate-900 text-white p-2 rounded-2xl flex items-center justify-between gap-2 border-2 border-white shadow-2xl">
+              <button type="button" onclick="setMobilePosTab('cart')" class="flex-1 flex items-center gap-2 text-left pl-1">
+                <span class="text-xl">🛒</span>
+                <div>
+                  <div class="text-[11px] text-slate-300 font-bold"><span id="floating-cart-count">0</span> sachet(s) au panier</div>
+                  <div class="text-sm font-black text-amber-300" id="floating-cart-total">0 FCFA</div>
+                </div>
+              </button>
+              <button type="button" onclick="openCheckoutModal()" class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black rounded-xl text-xs shadow flex items-center gap-1.5 transition whitespace-nowrap">
+                <span>💵</span> ENCAISSER
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Cart & Payment Checkout -->
+        <div id="pos-cart-panel" class="w-full lg:w-5/12 xl:w-4/12 hidden lg:flex flex-col h-full bg-white shadow-xl">
+          <!-- Cart Header & Customer selection -->
+          <div class="p-3 border-b border-slate-200 bg-slate-50 flex-none space-y-2">
+            <div class="flex items-center justify-between">
+              <h2 class="font-black text-slate-800 flex items-center gap-1.5 text-sm">
+                <span>🛒</span> Ticket : <span id="cart-active-client-label" class="text-sky-700 font-black">Client 1</span> (<span id="cart-item-count">0</span>)
+              </h2>
+              <div class="flex items-center gap-1">
+                <button type="button" onclick="clearCart()" class="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded-lg border border-rose-200 hover:bg-rose-50" title="Vider le ticket actuel">
+                  Vider
+                </button>
+              </div>
+            </div>
+
+            <!-- Select Client (facultatif) -->
+            <div class="flex gap-1.5 items-center">
+              <select id="cart-customer-select" class="flex-1 text-xs border border-slate-300 rounded-lg p-1.5 bg-white font-semibold text-slate-700 focus:ring-2 focus:ring-sky-500">
+                <!-- Populated dynamically -->
+              </select>
+              <button onclick="openModalAddCustomer()" class="p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg text-xs font-bold text-slate-700" title="Ajouter un nouveau client au carnet">
+                ➕
+              </button>
+            </div>
+          </div>
+
+          <!-- Cart Items List (Scrollable) -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-2" id="cart-items-container">
+            <!-- Dynamically populated with big touch steppers & editable prices -->
+          </div>
+
+          <!-- Cart Footer & Pay Button -->
+          <div class="p-3 bg-slate-50 border-t border-slate-200 flex-none space-y-2.5">
+            <!-- Financial details -->
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between text-slate-500">
+                <span>Total brut :</span>
+                <span class="font-bold text-slate-700" id="cart-subtotal">0 FCFA</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-500">
+                <span>Remise accordée (FCFA) :</span>
+                <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartTotals()" class="w-20 text-right p-1 font-bold border border-slate-300 rounded-lg text-xs">
+              </div>
+              <div class="masquer-mode-vendeur flex justify-between items-center text-xs text-emerald-800 font-bold bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                <span class="flex items-center gap-1"><span>📈</span> Marge estimée :</span>
+                <span id="cart-estimated-margin">0 FCFA</span>
+              </div>
+              <div class="flex justify-between text-lg font-black text-slate-900 pt-1.5 border-t border-slate-200">
+                <span>NET À PAYER :</span>
+                <span class="text-sky-700 font-mono text-xl" id="cart-total">0 FCFA</span>
+              </div>
+            </div>
+
+            <!-- Checkout Button -->
+            <button onclick="openCheckoutModal()" id="btn-checkout" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 text-base transition">
+              <span>💵</span> ENCAISSER LA COMMANDE
+            </button>
+          </div>
+        </div>
+
       </div>
-
-      <!-- Right: Cart & Payment Checkout -->
-      <div id="pos-cart-panel" class="w-full lg:w-4/12 hidden lg:flex flex-col h-full bg-white shadow-xl">
-        <!-- Cart Header & Customer selection -->
-        <div class="p-3 border-b border-slate-200 bg-slate-50 flex-none space-y-2">
-          <div class="flex items-center justify-between">
-            <h2 class="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
-              <span>🛒</span> Panier en cours (<span id="cart-item-count">0</span>)
-            </h2>
-            <button onclick="clearCart()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50">
-              Vider
-            </button>
-          </div>
-
-          <!-- Select Client -->
-          <div class="flex gap-1.5 items-center">
-            <select id="cart-customer-select" class="flex-1 text-xs border border-slate-300 rounded-md p-1.5 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-sky-500">
-              <!-- Populated dynamically -->
-            </select>
-            <button onclick="openModalAddCustomer()" class="p-1.5 bg-slate-200 hover:bg-slate-300 rounded text-xs font-bold text-slate-700" title="Nouveau Client">
-              ➕
-            </button>
-          </div>
-        </div>
-
-        <!-- Cart Items List (Scrollable) -->
-        <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="cart-items-container">
-          <!-- Dynamically populated -->
-          <div class="flex flex-col items-center justify-center h-48 text-slate-400 text-sm">
-            <span class="text-3xl mb-1">🛍️</span>
-            <span>Le panier est vide</span>
-            <span class="text-xs text-slate-400">Cliquez sur un sachet pour l'ajouter</span>
-          </div>
-        </div>
-
-        <!-- Cart Footer & Pay Button -->
-        <div class="p-3 bg-slate-50 border-t border-slate-200 flex-none space-y-2.5">
-          <!-- Financial details -->
-          <div class="space-y-1 text-xs">
-            <div class="flex justify-between text-slate-500">
-              <span>Sous-total :</span>
-              <span class="font-semibold text-slate-700" id="cart-subtotal">0 FCFA</span>
-            </div>
-            <div class="flex justify-between items-center text-slate-500">
-              <span>Remise (FCFA) :</span>
-              <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartTotals()" class="w-20 text-right p-0.5 border border-slate-300 rounded text-xs">
-            </div>
-            <div class="flex justify-between items-center text-xs text-emerald-800 font-bold bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-200">
-              <span class="flex items-center gap-1"><span>📈</span> Marge brute estimée :</span>
-              <span id="cart-estimated-margin">0 FCFA</span>
-            </div>
-            <div class="flex justify-between text-base font-black text-slate-900 pt-1 border-t border-slate-200">
-              <span>NET À PAYER :</span>
-              <span class="text-sky-700" id="cart-total">0 FCFA</span>
-            </div>
-          </div>
-
-          <!-- Checkout Button -->
-          <button onclick="openCheckoutModal()" id="btn-checkout" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-base transition">
-            <span>💳</span> ENCAISSER LA COMMANDE
+    </div>
           </button>
         </div>
       </div>
@@ -1402,15 +1423,15 @@
         </div>
         
         <!-- Quick notes -->
-        <div class="grid grid-cols-4 gap-1 text-xs">
-          <button type="button" onclick="addReceivedAmount(1000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">1 000</button>
-          <button type="button" onclick="addReceivedAmount(2000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">2 000</button>
-          <button type="button" onclick="addReceivedAmount(5000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">5 000</button>
-          <button type="button" onclick="addReceivedAmount(10000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">10 000</button>
-          <button type="button" onclick="addReceivedAmount(15000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">15 000</button>
-          <button type="button" onclick="addReceivedAmount(20000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">20 000</button>
-          <button type="button" onclick="addReceivedAmount(25000)" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">25 000</button>
-          <button type="button" onclick="setExactAmount()" class="p-1.5 bg-sky-100 hover:bg-sky-200 rounded font-bold text-sky-800">Compte Exact</button>
+        <div class="grid grid-cols-4 gap-1.5 text-xs">
+          <button type="button" onclick="setExactAmount()" class="p-2 bg-sky-100 hover:bg-sky-200 rounded-xl font-black text-sky-900 border border-sky-300">Exact</button>
+          <button type="button" onclick="addReceivedAmount(500)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">500 F</button>
+          <button type="button" onclick="addReceivedAmount(1000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">1 000 F</button>
+          <button type="button" onclick="addReceivedAmount(2000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">2 000 F</button>
+          <button type="button" onclick="addReceivedAmount(5000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">5 000 F</button>
+          <button type="button" onclick="addReceivedAmount(10000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">10 000 F</button>
+          <button type="button" onclick="addReceivedAmount(15000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">15 000 F</button>
+          <button type="button" onclick="addReceivedAmount(20000)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-800 border border-slate-200">20 000 F</button>
         </div>
 
         <input type="number" id="input-montant-recu" oninput="calculateChange()" class="w-full text-xl font-bold p-2.5 border-2 border-slate-300 rounded-xl text-center focus:border-sky-500 focus:outline-none" placeholder="0">
@@ -3022,6 +3043,6 @@
   </div>
 
   <!-- Application Logic -->
-  <script src="app.js?v=3.2_20261017"></script>
+  <script src="app.js?v=3.5_20261031_calcul"></script>
 </body>
 </html>
